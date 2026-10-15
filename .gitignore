@@ -3,3 +3,4 @@ dummy_data
 __pycache__
 notes.md
 prototype
+.venv/

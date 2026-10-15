@@ -1,22 +1,24 @@
-# Tasks
+++# Tasks
 
 ## Ownership
 
-- The coding assistant implements the browser interface in HTML, CSS, and JavaScript, starting from `prototype/`, and connects it to the agreed FastAPI endpoints.
-- The learner implements most Python backend work: database models and migrations, FastAPI routes, session state, AI integration, validation, and summary calculations.
+- The coding assistant implements the interactive learner practice board in HTML, CSS, and JavaScript, starting from `prototype/`, and connects it to the agreed FastAPI endpoints.
+- The learner implements most Python backend work and the server-rendered caregiver pages using FastAPI, Jinja templates, and ordinary HTML forms. These settings and review pages do not require JavaScript.
+- For learner-owned backend tasks, the assistant guides the learner interactively: explain the task's goal and relevant concepts, give one manageable implementation step at a time, then review the learner's attempt or help debug it before moving to the next step. Keep the learner responsible for writing and understanding the backend code.
 - Agree on request and response shapes at the API boundary before wiring each browser flow to it; the learner should be able to explain and maintain the backend implementation.
 
 ## 1. PostgreSQL foundation
 
-- [ ] 1.1 Add a dependency manifest and environment configuration for PostgreSQL, SQLAlchemy, migrations, pgvector, and the OpenAI SDK; verify a clean environment can install the declared dependencies without exposing secrets.
-- [ ] 1.2 Add a reproducible local PostgreSQL/pgvector setup and document how to start and stop it; verify the database accepts a connection using `DATABASE_URL`.
-- [ ] 1.3 Replace the hard-coded SQLite engine with environment-based PostgreSQL configuration and correct the SQLAlchemy session factory; verify the FastAPI app starts and opens a database session.
+- [x] 1.1 Add a dependency manifest and environment configuration for PostgreSQL, SQLAlchemy, migrations, pgvector, and the OpenAI SDK; verify a clean environment can install the declared dependencies without exposing secrets.
+- [x] 1.2 Add a reproducible local PostgreSQL/pgvector setup and document how to start and stop it; verify the database accepts a connection using `DATABASE_URL`.
+- [x] 1.3 Replace the hard-coded SQLite engine with environment-based PostgreSQL configuration and correct the SQLAlchemy session factory; verify the FastAPI app starts and opens a database session.
+- Task 2.1 is listed here before the migration because Alembic needs the final model metadata to generate the correct initial schema.
+- [ ] 2.1 Align SQLAlchemy models and Pydantic schemas around the learner profile settings, including small, medium, or large card size, with no caregiver account model; verify profile values are validated consistently on create and update.
 - [ ] 1.4 Add an initial migration for learners, goals, symbols, approved vocabulary, guidance sources/chunks, practice sessions, session guidance links, and recommendations; verify a fresh database upgrades to the expected schema.
 
 ## 2. Learner profiles and vocabulary
 
-- [ ] 2.1 Align SQLAlchemy models and Pydantic schemas around the learner profile settings, with no caregiver account model; verify profile values are validated consistently on create and update.
-- [ ] 2.2 [Backend: learner; frontend: coding assistant] Implement profile read/update routes and a caregiver-editable profile view for age band, optional locations, prompt display mode, communication goals, and starting format; verify edits persist after reload through the browser.
+- [ ] 2.2 [Learner: backend and server-rendered page; no JavaScript] Implement profile read/update routes and a caregiver settings page using FastAPI, Jinja, and standard HTML forms for age band, optional locations, prompt display mode, communication goals, starting format, and card size; verify edits persist after reload through the browser.
 - [ ] 2.3 Implement ARASAAC symbol search/import and persist source IDs, image references, author, attribution, and license metadata; verify imported symbol details remain available to the UI.
 - [ ] 2.4 Implement approved learner vocabulary and pending vocabulary suggestions, preserving existing grid positions; verify only caregiver approval adds a suggested symbol to the learner vocabulary.
 
@@ -37,7 +39,7 @@
 
 - [ ] 5.1 Implement structured session analysis using the saved summary and retrieved guidance, with explicit evidence references and an insufficient-evidence outcome; verify referenced session and guidance IDs belong to the request context.
 - [ ] 5.2 Implement recommendation persistence and review actions for vocabulary and next-practice suggestions; verify pending suggestions do not change profile or vocabulary until caregiver approval.
-- [ ] 5.3 [Frontend: coding assistant; API: learner] Add a caregiver summary/recommendation view showing computed measures, rationale, and guidance provenance; verify the browser displays each recommendation with links to its supporting summary and excerpts.
+- [ ] 5.3 [Learner: backend and server-rendered page; no JavaScript] Add a caregiver summary/recommendation page using FastAPI, Jinja, and standard HTML forms, showing computed measures, rationale, and guidance provenance with controls to approve or reject pending recommendations; verify the browser displays the supporting summary and excerpts and submits review decisions.
 
 ## 6. Integration and course demonstration
 
