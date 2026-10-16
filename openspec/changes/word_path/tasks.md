@@ -13,7 +13,7 @@
 - [x] 1.2 Add a reproducible local PostgreSQL/pgvector setup and document how to start and stop it; verify the database accepts a connection using `DATABASE_URL`.
 - [x] 1.3 Replace the hard-coded SQLite engine with environment-based PostgreSQL configuration and correct the SQLAlchemy session factory; verify the FastAPI app starts and opens a database session.
 - Task 2.1 is listed here before the migration because Alembic needs the final model metadata to generate the correct initial schema.
-- [ ] 2.1 Align SQLAlchemy models and Pydantic schemas around the learner profile settings, including small, medium, or large card size, with no caregiver account model; verify profile values are validated consistently on create and update.
+- [x] 2.1 Align SQLAlchemy models and Pydantic schemas around the learner profile settings, including small, medium, or large card size, with no caregiver account model; verify profile values are validated consistently on create and update.
 - [ ] 1.4 Add an initial migration for learners, goals, symbols, approved vocabulary, guidance sources/chunks, practice sessions, session guidance links, and recommendations; verify a fresh database upgrades to the expected schema.
 
 ## 2. Learner profiles and vocabulary
