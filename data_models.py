@@ -1,13 +1,11 @@
 """ Model of the tables in the database"""
 from __future__ import annotations      # so forward references work on older python versions
-
-from datetime import UTC, datetime
-
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, Boolean
-from sqlalchemy.orm import Mapped, mapped_column, relationship, foreign
-from sqlalchemy.dialects.postgresql import JSONB
+from datetime import datetime, UTC
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 from data_manager import Base
+
 
 class User(Base):
     __tablename__ = "users"
@@ -22,15 +20,18 @@ class User(Base):
     prompt_display: Mapped[str] = mapped_column(
         String(20), default="symbols_and_text", nullable=False
     )
-
     # Starting practice format ('choice' or 'sentence')
     starting_format: Mapped[str] = mapped_column(
         String(8), default="choice", nullable=False
     )
-
     # Optional locations
-    locations : Mapped[list[str]] = mapped_column(
-        JSONB, default=list, nullable=False
+    locations: Mapped[list[str]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    # Communication goals
+    # ('requesting', 'sharing_information', 'social_interaction', 'communication_repair')
+    communication_goals: Mapped[list[str]] = mapped_column(
+        JSON, default=list, nullable=False
     )
 
     # Card sizes ('small', 'medium', 'large')
@@ -41,37 +42,49 @@ class User(Base):
     default=lambda: datetime.now(UTC),
     )
 
-    # Table relationship/s
-    goal_links: Mapped[list[UserGoal]] = relationship(back_populates="user")
+
+class UserSymbol(Base):
+    __tablename__ = "user_symbols"
+
+    symbol_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False,)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), nullable=False,)
+
+    word: Mapped[str] = mapped_column(String(20), nullable=False,)
+    word_class: Mapped[str] = mapped_column(String(20), nullable=False,)
+    source: Mapped[str | None] = mapped_column(String(100), nullable=True,)
+    source_id: Mapped[str | None] = mapped_column(String(100), nullable=True,)
+
+    # Path to image file
+    image_reference: Mapped[str] = mapped_column(String(200), nullable=False,)
+
+    author: Mapped[str | None] = mapped_column(String(50), nullable=True,)
+    license: Mapped[str | None] = mapped_column(String(50), nullable=True,)
+
+    # Formatted symbol credits, eg. 'Author: <name>; source: <name>; licence: <licence_code>'
+    attribution: Mapped[str | None] = mapped_column(String(200), nullable=True,)
 
 
-class CommunicationGoal(Base):
-    __tablename__ = "communication_goals"
+class PracticeSession(Base):
+    __tablename__ = "practice_sessions"
 
-    goal_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    session_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False,)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), nullable=False,)
 
-    # Goals ('requesting', 'sharing_information', 'social_interaction'
-    # and 'communication_repair')
-    goal_name: Mapped[str] = mapped_column(String(20), unique=True, nullable=False)
+    communication_goal: Mapped[str] = mapped_column(String(20), nullable=False,)
+    practice_format: Mapped[str] = mapped_column(String(8), nullable=False,)
+    scenario: Mapped[dict] = mapped_column(JSON, nullable=False,)
 
-    # Table relationship/s
-    user_links: Mapped[list[UserGoal]] = relationship(back_populates="goal")
-
-
-class UserGoal(Base):
-    __tablename__ = "user_goals"
-
-    user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("users.user_id"), primary_key=True, nullable=False
+    # Session status ('active', 'completed')
+    status: Mapped[str] = mapped_column(String(9), default="active", nullable=False,)
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
-    goal_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("communication_goals.goal_id"), primary_key=True,
-        nullable=False
-    )
+    summary: Mapped[dict | None] = mapped_column(JSON, nullable=True,)
 
-    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-
-    # Table relationship/s
-    user: Mapped["User"] = relationship(back_populates="goal_links")
-    goal: Mapped["CommunicationGoal"] = relationship(back_populates="user_links")

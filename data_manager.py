@@ -1,18 +1,15 @@
 """ Interactions with the database"""
-from dotenv import load_dotenv
 import os
-from sqlalchemy import Column, ForeignKey, Integer, String, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session, relationship, DeclarativeBase
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-# get database path
-load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+os.makedirs(DATABASE_DIR, exist_ok=True)
 
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is missing")
+DATABASE_URL = f"sqlite:///{os.path.join(DATABASE_DIR, 'word_path.db')}"
 
 # Create database connection
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

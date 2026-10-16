@@ -2,34 +2,32 @@
 
 ## Why
 
-The project aims to help AAC users practise communicating with a tablet, but the current app contains only a basic in-memory user list and placeholder feature routes. A focused end-to-end practice flow will demonstrate the course's NLP, preprocessing, RAG, structured model output, API integration, prompt engineering, and GenAI ethics goals while replacing the notes' PECS-phase framing with broader communication goals.
+The current project is a small FastAPI application, and the mentor advised keeping the MVP backend simple. A working SQLite-backed API with a little dummy data will make it possible to demonstrate the main flow before adding external services or infrastructure.
 
 ## What Changes
 
-- Add caregiver-editable learner profiles without caregiver accounts, including age band, optional locations, prompt presentation, active communication goals, and starting practice format.
-- Add approved learner vocabulary sourced from ARASAAC, retaining symbol source, attribution, and license metadata; AI vocabulary suggestions require caregiver review.
-- Add direct learner practice organized around requesting, sharing information, social interaction, and communication repair. Support small-choice symbol selection and multi-symbol sentence building.
-- Curate and preprocess English AAC guidance excerpts for retrieval. Generate structured scenarios and evidence-grounded recommendations with OpenAI `gpt-4o-mini`; use `text-embedding-3-small` for retrieval.
-- Keep trial details in memory during a session. Persist an evidence-rich session summary, guidance provenance, and caregiver-reviewed recommendations rather than every interaction.
-- Replace PECS phase progression and phase-based measures in the feature design with goal- and format-based practice. Configure PostgreSQL for persistence and assess pgvector for corpus retrieval.
-- Keep the OpenAI API key in an environment variable; never store or commit it.
+- Build the first backend slice around a learner profile, the learner's vocabulary symbols, and practice sessions.
+- Use SQLite and SQLAlchemy for local persistence, with Pydantic schemas for API input and output.
+- Provide a small set of endpoints to read and update a learner, list and add vocabulary symbols, and start, respond to, and complete a practice session.
+- Use a few fixed scenarios from a Python data file so the endpoints can be exercised without an AI service.
+- Keep learner responses in memory while a session is active and persist a short session summary when it is completed.
+- Keep API routes and model behavior small enough for the learner to implement and explain; guide backend implementation one manageable step at a time.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `aac-practice`: Direct AAC practice sessions, scenario generation, session summaries, and evidence-based recommendations for caregiver review.
-- `learner-vocabulary`: Learner profile settings, approved vocabulary, ARASAAC symbol metadata, and vocabulary suggestion review.
-- `aac-guidance-retrieval`: Curated, cleaned AAC guidance excerpts and retrieval with source provenance for scenario and recommendation generation.
+- `aac-practice`: A basic practice-session flow using fixed scenarios and a saved completion summary.
+- `learner-vocabulary`: A learner profile and learner-owned vocabulary symbols, including basic image source and attribution details where available.
 
-### Modified Capabilities
+### Deferred Capabilities
 
-None. The project currently has no OpenSpec capability specs.
+- `aac-guidance-retrieval`, AI-generated scenarios or recommendations, ARASAAC search/import, caregiver review pages, and richer analytics are later work. They are not required for this first backend slice.
 
 ## Impact
 
-- Existing FastAPI routes, SQLAlchemy models/database configuration, Pydantic schemas, templates, and `notes.md` require alignment; many routes are placeholders and current schemas disagree about profile fields and phase ranges.
-- Replace the SQLite connection with PostgreSQL configuration and add migrations/schema creation appropriate to the project. Use PostgreSQL JSONB for structured records; use pgvector only if its setup is proportionate to the curated corpus and course demo.
-- Add OpenAI client integration for embeddings and structured scenario/recommendation output. TTS is a client/device presentation concern and does not require model-generated audio.
-- Add ARASAAC API integration and preserve required attribution/license information. Curated guidance excerpts must retain source and reuse terms.
-- Keep session trial events transient; do not persist raw per-interaction records.
+- Simplify the existing FastAPI routes, SQLAlchemy models, database configuration, and Pydantic schemas to support the agreed MVP flow.
+- Use SQLite locally and avoid adding Docker, PostgreSQL, Alembic migrations, or pgvector for this stage.
+- Add a small Python module containing dummy practice scenarios and, if useful, seed a demo learner and a few vocabulary symbols.
+- Keep demo data fictional and avoid storing individual response events after session completion.
+- Reconcile the longer-term capability specs with this reduced MVP before treating the full change as complete.
