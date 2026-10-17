@@ -1,5 +1,5 @@
 .env
-dummy_data
+dummy_data.py
 __pycache__
 notes.md
 prototype

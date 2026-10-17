@@ -8,8 +8,8 @@ This is a course MVP for a small FastAPI app. The mentor's guidance is to focus 
 
 **Goals:**
 
-- Provide a simple API flow for one learner to practise a communication goal.
-- Persist the learner profile, learner vocabulary, and completed session summary in SQLite.
+- Provide a simple API flow to create learner profiles and practise communication goals.
+- Persist created learner profiles, learner vocabulary, and completed session summaries in SQLite.
 - Use fixed dummy scenarios so the flow works without network access or model credentials.
 - Keep the implementation approachable and explainable as the learner writes most of the Python backend.
 
@@ -17,7 +17,7 @@ This is a course MVP for a small FastAPI app. The mentor's guidance is to focus 
 
 - Docker, PostgreSQL, Alembic migrations, or pgvector.
 - OpenAI calls, embeddings, RAG, or generated scenarios and recommendations.
-- Accounts, authentication, multiple caregiver roles, or production deployment.
+- Caregiver accounts, authentication, multiple caregiver roles, or production deployment.
 - A full AAC board frontend, ARASAAC search integration, or individual response analytics.
 
 ## Decisions
@@ -26,20 +26,21 @@ This is a course MVP for a small FastAPI app. The mentor's guidance is to focus 
 
 Keep database setup local and direct. Use a SQLite database file and the project's existing SQLAlchemy model/session pattern. Create the MVP tables from SQLAlchemy metadata during application startup if needed. Do not add Alembic or Docker for this stage. Store flexible list/summary values using SQLAlchemy's generic `JSON` type, which works with SQLite; do not use PostgreSQL-only `JSONB`.
 
-### Keep the data model to three tables
+### Keep the data model focused on four tables
 
-- **User**: the learner profile, including the selected age band, presentation settings, locations if currently required by the UI, and enabled communication goals. Store goals as a small validated list for this single-user MVP rather than adding goal catalog and join tables.
-- **UserSymbol**: a word or phrase available to the learner, with its image reference and optional source/attribution fields. Keep it user-owned; do not introduce a separate global symbol catalog.
+- **User**: a learner profile, including the selected age band, presentation settings, locations if currently required by the UI, and enabled communication goals. Store goals as a small validated list rather than adding goal catalog and join tables.
+- **Symbol**: a preloaded, shared catalog entry with its word, word class, required image reference, and optional source/attribution fields.
+- **UserSymbol**: the association between a learner and a catalog symbol. Avoid duplicating catalog metadata; this table represents each learner's collection membership and retains its learner-specific page/position as required by the vocabulary spec.
 - **PracticeSession**: the learner, selected goal and format, scenario, completion status, timestamps, and a short final summary. Do not create response-event or analytics tables.
 
-Use simple foreign keys from `UserSymbol` and `PracticeSession` to `User`. Scenario fixtures live in a small Python module, not another database table. Use a single clearly documented demo learner if account identity is not yet part of the existing app flow.
+Use foreign keys from `UserSymbol` to both `User` and `Symbol`, and from `PracticeSession` to `User`. Deleting a user cascades to that user's `UserSymbol` associations and practice sessions, while preserving shared `Symbol` catalog entries. A catalog symbol may belong to multiple learner collections; deleting it from one collection removes only the association, not the shared catalog entry. Learner profiles can be created through the API without caregiver accounts or authentication. Keep the fictional learner fixture in `dummy_data.py` separate from SQLite; preload shared catalog symbols from that module's catalog fixture.
 
 ### Keep the first endpoint flow narrow
 
 Expose only what is needed to demonstrate the backend flow:
 
-- Read and update the learner profile.
-- List and add learner symbols.
+- Create, list, read, update, and delete learner profiles.
+- List the shared symbol catalog and add or remove catalog symbols from a learner's collection.
 - Start a session for an enabled goal and a supported format, selecting a fixed scenario from the fixture data.
 - Submit a response while the session is active.
 - Complete the session and save a basic summary.
@@ -52,23 +53,23 @@ Use Pydantic schemas for request and response shapes and straightforward checks 
 
 ### Defer integrations until the flow works
 
-Use fictional seeded data and fixed scenarios to validate endpoints. Consider AI generation, guidance retrieval, ARASAAC import, recommendation review, and the browser board only after the SQLite endpoint flow is complete and the course scope still requires them.
+Use a fictional learner fixture and fixed scenarios to validate endpoints. Preloaded symbol catalog entries are reference data persisted in SQLite; do not insert the fictional learner fixture automatically. Consider AI generation, guidance retrieval, ARASAAC import, recommendation review, and the browser board only after the SQLite endpoint flow is complete and the course scope still requires them.
 
 ## Risks / Trade-offs
 
-- SQLite and a single-user demo are suitable for local MVP work but do not address concurrent production use.
+- SQLite is suitable for local MVP work but does not address concurrent production use.
 - Runtime session state disappears on restart. This is acceptable for testing the basic flow, but should be revisited if durable in-progress sessions become a requirement.
 - The existing broader capability specs describe features beyond this MVP and must not be mistaken for work completed by this change's first slice.
 
 ## Implementation Sequence
 
 1. Simplify database configuration to SQLite and make startup table creation work.
-2. Agree the three model shapes and corresponding Pydantic schemas.
-3. Add small fictional fixtures for one learner, symbols, and scenarios.
+2. Agree the four model shapes and corresponding Pydantic schemas.
+3. Add a fictional learner fixture, preload shared catalog symbols, and define fixed scenarios.
 4. Implement and manually exercise profile and symbol endpoints.
 5. Implement session start, response, and completion endpoints.
 6. Demonstrate the entire flow using the API docs or simple HTTP requests, then decide which deferred capability is needed next.
 
 ## Open Questions
 
-None block the basic endpoint slice. Keep current profile settings only where they support the existing app flow; avoid adding new profile fields solely for hypothetical later features.
+- Keep current profile settings only where they support the existing app flow; avoid adding new profile fields solely for hypothetical later features.

@@ -46,22 +46,33 @@ class User(Base):
 class UserSymbol(Base):
     __tablename__ = "user_symbols"
 
-    symbol_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False,)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.user_id"), nullable=False,)
+    symbol_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("symbols.symbol_id"), primary_key=True, nullable=False,
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.user_id"), primary_key=True, nullable=False,
+    )
+    page: Mapped[str] = mapped_column(String(10), nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    word: Mapped[str] = mapped_column(String(20), nullable=False,)
-    word_class: Mapped[str] = mapped_column(String(20), nullable=False,)
-    source: Mapped[str | None] = mapped_column(String(100), nullable=True,)
-    source_id: Mapped[str | None] = mapped_column(String(100), nullable=True,)
+
+class Symbol(Base):
+    __tablename__ = "symbols"
+
+    symbol_id: Mapped[int] = mapped_column(Integer, primary_key=True, nullable=False,)
+    word: Mapped[str] = mapped_column(String(20), nullable=False, )
+    word_class: Mapped[str] = mapped_column(String(20), nullable=False, )
+    source: Mapped[str | None] = mapped_column(String(100), nullable=True, )
+    source_id: Mapped[str | None] = mapped_column(String(100), nullable=True, )
 
     # Path to image file
-    image_reference: Mapped[str] = mapped_column(String(200), nullable=False,)
+    image_reference: Mapped[str] = mapped_column(String(200), nullable=False, )
 
-    author: Mapped[str | None] = mapped_column(String(50), nullable=True,)
-    license: Mapped[str | None] = mapped_column(String(50), nullable=True,)
+    author: Mapped[str | None] = mapped_column(String(50), nullable=True, )
+    license: Mapped[str | None] = mapped_column(String(50), nullable=True, )
 
     # Formatted symbol credits, eg. 'Author: <name>; source: <name>; licence: <licence_code>'
-    attribution: Mapped[str | None] = mapped_column(String(200), nullable=True,)
+    attribution: Mapped[str | None] = mapped_column(String(200), nullable=True, )
 
 
 class PracticeSession(Base):
@@ -75,7 +86,7 @@ class PracticeSession(Base):
     scenario: Mapped[dict] = mapped_column(JSON, nullable=False,)
 
     # Session status ('active', 'completed')
-    status: Mapped[str] = mapped_column(String(9), default="active", nullable=False,)
+    session_status: Mapped[str] = mapped_column(String(9), default="active", nullable=False,)
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),

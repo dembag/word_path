@@ -6,8 +6,35 @@ Defines learner profile settings and approved symbol vocabulary used to tailor A
 
 ## ADDED Requirements
 
+### Requirement: Shared symbols are stored in a preloaded catalog
+The system SHALL store reusable symbols in a shared catalog and associate catalog entries with learners through the learner vocabulary.
+
+#### Scenario: Preload catalog symbols
+- **WHEN** the application initializes the local catalog
+- **THEN** it makes the predefined symbols available for learners to add to their collections
+
+#### Scenario: Add catalog symbol to learner collection
+- **WHEN** a caregiver adds an available catalog symbol to a learner's vocabulary
+- **THEN** the system creates a learner-to-symbol association without duplicating the catalog entry
+
 ### Requirement: Caregiver can configure the learner profile
 The system SHALL allow a caregiver to adjust practice settings through the learner's profile without requiring a caregiver account.
+
+#### Scenario: Create learner profile
+- **WHEN** a caregiver submits a new learner profile with valid settings
+- **THEN** the system stores the profile and returns its identifier and profile data
+
+#### Scenario: List learner profiles
+- **WHEN** a caregiver requests the learner profiles
+- **THEN** the system returns the stored profiles
+
+#### Scenario: Read learner profile
+- **WHEN** a caregiver requests a stored learner profile by identifier
+- **THEN** the system returns that profile or reports that it does not exist
+
+#### Scenario: Delete learner profile
+- **WHEN** a caregiver deletes a stored learner profile
+- **THEN** the system removes that profile and its learner-symbol associations and practice sessions, while preserving shared catalog symbols
 
 #### Scenario: Update profile settings
 - **WHEN** a caregiver edits and saves the learner profile
@@ -30,6 +57,10 @@ The system SHALL maintain an approved vocabulary for each learner and preserve a
 #### Scenario: Add approved symbol
 - **WHEN** a caregiver adds an available symbol to the learner vocabulary
 - **THEN** the system associates it with the learner and records its word class and assigned page and position
+
+#### Scenario: Delete learner symbol
+- **WHEN** a caregiver deletes a symbol from a learner's vocabulary
+- **THEN** the system removes that learner-to-symbol association without deleting the shared catalog entry or affecting other learners' collections
 
 #### Scenario: Preserve symbol position
 - **WHEN** vocabulary is suggested or approved

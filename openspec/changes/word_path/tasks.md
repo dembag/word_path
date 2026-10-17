@@ -8,14 +8,14 @@
 ## 1. SQLite and model foundation
 
 - [x] 1.1 Simplify database configuration to a local SQLite file and remove runtime dependence on PostgreSQL settings; confirm the FastAPI app can open a database session.
-- [ ] 1.2 Define the MVP SQLAlchemy models: `User`, `UserSymbol`, and `PracticeSession`, with generic JSON columns only where needed; create tables from metadata at startup.
-- [ ] 1.3 Align Pydantic schemas with the profile, symbol, and session data; use shared literals/validation for goals, age bands, formats, and statuses where appropriate.
-- [ ] 1.4 Add a small fictional seed/demo dataset and a Python fixture containing a few fixed practice scenarios.
+- [x] 1.2 Define the MVP SQLAlchemy models: `User`, shared `Symbol`, `UserSymbol` association with learner-specific page/position, and `PracticeSession`, with generic JSON columns only where needed; create tables from metadata at startup.
+- [ ] 1.3 Align Pydantic schemas with profiles, catalog symbols, learner-symbol associations, and sessions; use shared literals/validation for goals, age bands, formats, and statuses where appropriate.
+- [ ] 1.4 Add a small fictional learner fixture, predefined shared catalog symbols, and a few fixed practice scenarios in `dummy_data.py`; preload catalog symbols into SQLite without inserting the learner fixture.
 
 ## 2. Learner and vocabulary endpoints
 
-- [ ] 2.1 Implement endpoints to read and update the demo learner profile; reject invalid profile values and confirm changes are reflected in later reads.
-- [ ] 2.2 Implement endpoints to list and add user symbols, including optional image reference and attribution fields; confirm newly added symbols belong to the demo learner.
+- [ ] 2.1 Implement user CRUD endpoints in SQLite; reject invalid values, confirm created/updated profiles are reflected in later reads, and cascade user deletion to their symbol associations and sessions while preserving shared catalog symbols.
+- [ ] 2.2 Implement endpoints to list catalog symbols and add/remove catalog symbol associations for a learner; preserve each association's page/position and confirm operations affect only that learner's collection.
 
 ## 3. Practice session endpoints
 
@@ -25,6 +25,6 @@
 
 ## 4. MVP walkthrough
 
-- [ ] 4.1 Walk through profile read/update, symbol list/add, session start, response, and completion using fictional data and the API docs or simple HTTP requests.
+- [ ] 4.1 Walk through user CRUD, symbol list/create/delete, session start, response, and completion using the API docs or simple HTTP requests.
 - [ ] 4.2 Update the basic setup notes to explain running the SQLite app and exercising the endpoints; remove instructions that require Docker, PostgreSQL, or Alembic for the MVP.
 - [ ] 4.3 Review the change against the mentor's MVP scope and identify any deferred capability that is still required by the course before expanding implementation.

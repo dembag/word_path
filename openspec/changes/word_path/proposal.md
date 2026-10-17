@@ -6,9 +6,9 @@ The current project is a small FastAPI application, and the mentor advised keepi
 
 ## What Changes
 
-- Build the first backend slice around a learner profile, the learner's vocabulary symbols, and practice sessions.
+- Build the first backend slice around learner profiles, a shared preloaded symbol catalog with per-learner collections, and practice sessions.
 - Use SQLite and SQLAlchemy for local persistence, with Pydantic schemas for API input and output.
-- Provide a small set of endpoints to read and update a learner, list and add vocabulary symbols, and start, respond to, and complete a practice session.
+- Provide CRUD endpoints for learner profiles, list/add/remove endpoints for learner vocabulary symbols from a shared catalog, and endpoints to start, respond to, and complete a practice session.
 - Use a few fixed scenarios from a Python data file so the endpoints can be exercised without an AI service.
 - Keep learner responses in memory while a session is active and persist a short session summary when it is completed.
 - Keep API routes and model behavior small enough for the learner to implement and explain; guide backend implementation one manageable step at a time.
@@ -28,6 +28,6 @@ The current project is a small FastAPI application, and the mentor advised keepi
 
 - Simplify the existing FastAPI routes, SQLAlchemy models, database configuration, and Pydantic schemas to support the agreed MVP flow.
 - Use SQLite locally and avoid adding Docker, PostgreSQL, Alembic migrations, or pgvector for this stage.
-- Add a small Python module containing dummy practice scenarios and, if useful, seed a demo learner and a few vocabulary symbols.
+- Add a small Python module containing a fictional learner fixture, preloaded catalog symbols, and fixed practice scenarios; persist catalog symbols as shared reference data, but keep the learner fixture separate from database records.
 - Keep demo data fictional and avoid storing individual response events after session completion.
 - Reconcile the longer-term capability specs with this reduced MVP before treating the full change as complete.
