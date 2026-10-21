@@ -52,7 +52,7 @@ class UserSymbol(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), primary_key=True, nullable=False,
     )
-    page: Mapped[str] = mapped_column(String(10), nullable=False)
+    page: Mapped[str] = mapped_column(String(20), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
 
 

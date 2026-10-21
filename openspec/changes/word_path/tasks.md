@@ -9,8 +9,8 @@
 
 - [x] 1.1 Simplify database configuration to a local SQLite file and remove runtime dependence on PostgreSQL settings; confirm the FastAPI app can open a database session.
 - [x] 1.2 Define the MVP SQLAlchemy models: `User`, shared `Symbol`, `UserSymbol` association with learner-specific page/position, and `PracticeSession`, with generic JSON columns only where needed; create tables from metadata at startup.
-- [ ] 1.3 Align Pydantic schemas with profiles, catalog symbols, learner-symbol associations, and sessions; use shared literals/validation for goals, age bands, formats, and statuses where appropriate.
-- [ ] 1.4 Add a small fictional learner fixture, predefined shared catalog symbols, and a few fixed practice scenarios in `dummy_data.py`; preload catalog symbols into SQLite without inserting the learner fixture.
+- [x] 1.3 Align Pydantic schemas with profiles, catalog symbols, learner-symbol associations, and sessions; use shared literals/validation for goals, age bands, formats, and statuses where appropriate.
+- [x] 1.4 Add a small fictional learner fixture, predefined shared catalog symbols, and a few fixed practice scenarios in `dummy_data.py`; preload catalog symbols into SQLite without inserting the learner fixture.
 
 ## 2. Learner and vocabulary endpoints
 

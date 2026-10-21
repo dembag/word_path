@@ -36,13 +36,13 @@ class UserBase(BaseModel):
     card_size: CardSize = "medium"
 
 
-
 class UserCreate(UserBase):
     pass
 
 
 # Used for updating the user's profile
 class UserUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=50)
     age_band: AgeBand | None = None
     prompt_display: PromptDisplay | None = None
     starting_format: PracticeFormat | None = None
@@ -82,6 +82,23 @@ class SymbolResponse(SymbolBase):
     model_config = ConfigDict(from_attributes=True)
 
     symbol_id: int
+
+
+class UserSymbolBase(BaseModel):
+
+    symbol_id: int
+    page: str = Field(min_length=1, max_length=20)
+    position: int
+
+
+class UserSymbolCreate(UserSymbolBase):
+    pass
+
+
+class UserSymbolResponse(UserSymbolBase):
+    # Allows access by dot notation to work eg. user.name
+    model_config = ConfigDict(from_attributes=True)
+
     user_id: int
 
 
