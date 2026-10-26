@@ -1,16 +1,19 @@
+
+
 from fastapi import Depends, FastAPI, Request, HTTPException, status
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Annotated
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, desc
 from sqlalchemy.orm import Session
 
 from data_manager import Base, engine, get_db, SessionLocal
 from dummy_data import SYMBOL_CATALOG
 import data_models as dm
 
-from api_schemas import UserCreate, UserResponse, UserUpdate
+from api_schemas import (SymbolResponse, UserCreate, UserResponse,  
+                         UserSymbolCreate, UserSymbolResponse, UserUpdate)
 
 
 @asynccontextmanager
@@ -191,14 +194,16 @@ def delete_user(
 
 
 # ------ Symbols ------
-@app.get("/symbols", include_in_schema=False)
-def display_symbols():
+@app.get(
+    "/symbols",
+    response_model=list[SymbolResponse],
+    status_code=status.HTTP_200_OK,
+)
+def display_symbols(db: Annotated[Session, Depends(get_db)]):
     """
-    Displays the symbols in the Symbols table.
-    - sort/search by tags, word type
-    - Custom upload option
+    Displays all symbols
     """
-    pass
+    return db.scalars(select(dm.Symbol).order_by(dm.Symbol.symbol_id)).all()
 
 
 @app.get("/symbols/{symbol_id}", include_in_schema=False)
@@ -218,23 +223,73 @@ def add_custom_symbol():
 
 
 # ------ Vocabulary ------
-@app.get("/vocabulary/{user_id}", include_in_schema=False)
-def user_vocabulary():
+@app.get(
+    "/vocabulary/{user_id}",
+    response_model=list[UserSymbolResponse],
+    status_code=status.HTTP_200_OK,
+)
+def user_vocabulary(user_id: int, db: Annotated[Session, Depends(get_db)]):
     """
     Displays the user's vocabulary.
     - Edit/delete symbols?
     - Custom upload button
     """
-    pass
+    if db.get(dm.User, user_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return db.scalars(
+        select(dm.UserSymbol)
+        .where(dm.UserSymbol.user_id == user_id)
+        .order_by(
+            dm.UserSymbol.page,
+            dm.UserSymbol.position,
+            dm.UserSymbol.symbol_id,
+        )
+    ).all()
 
 
-@app.post("/vocabulary/{user_id}", include_in_schema=False)
-def update_vocabulary():
+@app.post("/vocabulary/{user_id}", response_model=UserSymbolResponse)
+def update_vocabulary(
+        user_id: int, symbol_id: int, page: str,
+        db: Annotated[Session, Depends(get_db)]
+):
     """
     Updates a user's vocabulary with custom upload,
     selection from the database, or AI-suggested word.
     """
-    pass
+    if db.get(dm.User, user_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    if db.get(dm.Symbol, symbol_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Symbol is not in the database",
+        )
+
+    # Find last position on selected page
+    last_pos = db.scalars(
+        select(dm.UserSymbol)
+        .where(dm.UserSymbol.user_id == user_id)
+        .where(dm.UserSymbol.page == page)
+        .order_by(desc(dm.UserSymbol.position))
+    ).first()
+
+    added_symbol = dm.UserSymbol(
+        user_id=user_id,
+        symbol_id=symbol_id,
+        page=page,
+        position=last_pos + 1
+    )
+    db.add(added_symbol)
+    db.commit()
+    db.refresh(added_symbol)
+
+    return added_symbol
 
 
 @app.get("/vocabulary/{user_id}/suggestions", include_in_schema=False)

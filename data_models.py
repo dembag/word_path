@@ -46,11 +46,11 @@ class User(Base):
 class UserSymbol(Base):
     __tablename__ = "user_symbols"
 
-    symbol_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("symbols.symbol_id"), primary_key=True, nullable=False,
-    )
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.user_id"), primary_key=True, nullable=False,
+    )
+    symbol_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("symbols.symbol_id"), primary_key=True, nullable=False,
     )
     page: Mapped[str] = mapped_column(String(20), nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False)
