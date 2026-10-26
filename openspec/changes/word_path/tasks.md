@@ -15,7 +15,7 @@
 ## 2. Learner and vocabulary endpoints
 
 - [x] 2.1 Implement user CRUD endpoints in SQLite; reject invalid values, confirm created/updated profiles are reflected in later reads, and cascade user deletion to their symbol associations and sessions while preserving shared catalog symbols.
-- [ ] 2.2 Implement endpoints to list catalog symbols and add/remove catalog symbol associations for a learner; preserve each association's page/position and confirm operations affect only that learner's collection.
+- [x] 2.2 Implement endpoints to list catalog symbols and add/remove catalog symbol associations for a learner; preserve each association's page/position and confirm operations affect only that learner's collection.
 
 ## 3. Practice session endpoints
 

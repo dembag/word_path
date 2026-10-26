@@ -271,25 +271,70 @@ def update_vocabulary(
             detail="Symbol is not in the database",
         )
 
+    if db.get(dm.UserSymbol, (user_id, symbol_id)):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Symbol is already in the vocabulary"
+        )
+
     # Find last position on selected page
-    last_pos = db.scalars(
+    last_symbol = db.scalars(
         select(dm.UserSymbol)
         .where(dm.UserSymbol.user_id == user_id)
         .where(dm.UserSymbol.page == page)
         .order_by(desc(dm.UserSymbol.position))
     ).first()
 
+    if last_symbol is None:
+        position = 1
+    else:
+        position = last_symbol.position + 1
+
     added_symbol = dm.UserSymbol(
         user_id=user_id,
         symbol_id=symbol_id,
         page=page,
-        position=last_pos + 1
+        position=position
     )
     db.add(added_symbol)
     db.commit()
     db.refresh(added_symbol)
 
     return added_symbol
+
+
+@app.delete(
+    "/vocabulary/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_symbol_from_vocabulary(
+        user_id: int,
+        symbol_id: int,
+        db: Annotated[Session, Depends(get_db)],
+):
+    """
+    Deletes a symbol from a user's vocabulary
+    """
+    user = db.get(dm.User, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    word_to_remove = db.get(dm.UserSymbol, (user_id, symbol_id))
+    if word_to_remove is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Word is not in the vocabulary"
+        )
+
+
+    # Delete profile
+    db.delete(word_to_remove)
+    db.commit()
+
+
 
 
 @app.get("/vocabulary/{user_id}/suggestions", include_in_schema=False)
