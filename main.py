@@ -1,4 +1,5 @@
-
+import random
+from operator import itemgetter
 
 from fastapi import Depends, FastAPI, Request, HTTPException, status
 from fastapi.templating import Jinja2Templates
@@ -9,12 +10,13 @@ from sqlalchemy import delete, select, desc
 from sqlalchemy.orm import Session
 
 from data_manager import Base, engine, get_db, SessionLocal
-from dummy_data import SYMBOL_CATALOG
+from dummy_data import SCENARIOS, SYMBOL_CATALOG
 import data_models as dm
 
 from api_schemas import (SymbolResponse, UserCreate, UserResponse,  
                          UserSymbolCreate, UserSymbolResponse, UserUpdate)
-
+from api_schemas import StartPracticeSession, PracticeSessionResponse
+from data_models import PracticeSession
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +32,6 @@ app = FastAPI(lifespan=lifespan)
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
-
 
 
 # ------ Users ------
@@ -215,7 +216,7 @@ def display_symbol():
 
 
 @app.post("/symbols", include_in_schema=False)
-def add_custom_symbol():
+def add_symbol():
     """
     Adds custom symbols to the Symbol table and vocab_symbol.
     """
@@ -347,13 +348,61 @@ def user_vocabulary():
 
 
 # ------ Practice sessions ------
-@app.post("/sessions", include_in_schema=False)
-def start_session():
+@app.post("/sessions", response_model=PracticeSessionResponse)
+def start_session(
+    start_session: StartPracticeSession, db: Annotated[Session, Depends(get_db)]
+):
     """
     Starts a practice session
     - Scoped to the user's vocabulary and learning phase
+    :type start_session: StartPracticeSession
     """
-    pass
+    user = db.get(dm.User, start_session.user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    communication_goal = start_session.communication_goal
+    practice_format = start_session.practice_format
+
+    # Check the goal and format is enabled in user profile
+    if communication_goal not in user.communication_goals:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Requested communication goal is not enabled in user's profile",
+        )
+
+    # ----Get fixed test scenario from dummy_data.py for test ----
+    available_scenarios = [
+        item
+        for item in SCENARIOS
+        if item.get("goal") == communication_goal
+        and item.get("format") == practice_format
+    ]
+
+    if not available_scenarios:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No compatible scenario found",
+        )
+
+    scenario = random.choice(available_scenarios)
+
+    practice_session = dm.PracticeSession(
+        user_id=start_session.user_id,
+        communication_goal=communication_goal,
+        practice_format=practice_format,
+        scenario=scenario,
+        session_status="active",
+    )
+
+    db.add(practice_session)
+    db.commit()
+    db.refresh(practice_session)
+
+    return practice_session
 
 
 @app.post("/sessions/{session_id}/scenario", include_in_schema=False)

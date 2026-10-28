@@ -24,7 +24,7 @@ CommunicationGoal = Literal[
 SessionStatus = Literal["active", "completed"]
 
 
-
+# ------ User schema ------
 # Fields returned when creating AND returning user information
 class UserBase(BaseModel):
     name: str = Field(min_length=1, max_length=50)
@@ -60,7 +60,7 @@ class UserResponse(UserBase):
     created_at: datetime
 
 
-# Symbol schema
+# ------ Symbol schema ------
 class SymbolBase(BaseModel):
     word: str = Field(min_length=1, max_length=20)
     word_class: str = Field(min_length=3, max_length=20)
@@ -102,11 +102,10 @@ class UserSymbolResponse(UserSymbolBase):
     user_id: int
 
 
-# Practice session schema
+# ------ Practice session schema ------
 class PracticeSessionBase(BaseModel):
     communication_goal: CommunicationGoal
     practice_format: PracticeFormat
-    scenario: dict[str, Any]
     session_status: SessionStatus = Field(default="active")
     summary: dict[str, Any] | None = None
 
@@ -117,5 +116,12 @@ class PracticeSessionResponse(PracticeSessionBase):
 
     session_id: int
     user_id: int
+    scenario: dict[str, Any]
     started_at: datetime
     completed_at: datetime | None
+
+
+class StartPracticeSession(BaseModel):
+    user_id: int
+    communication_goal: CommunicationGoal
+    practice_format: PracticeFormat

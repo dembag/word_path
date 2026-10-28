@@ -19,7 +19,7 @@
 
 ## 3. Practice session endpoints
 
-- [ ] 3.1 Implement session start using an enabled learner goal, a supported practice format, and one matching fixed scenario; reject unsupported goals or formats.
+- [x] 3.1 Implement session start using an enabled learner goal, a supported practice format, and one matching fixed scenario; reject unsupported goals or formats.
 - [ ] 3.2 Implement response submission for an active session and keep response events in runtime memory only; reject responses to missing or completed sessions.
 - [ ] 3.3 Implement session completion, calculate a small summary, persist it on `PracticeSession`, and clear transient response data.
 
