@@ -413,12 +413,13 @@ def generate_scenario():
     pass
 
 
-@app.post("/sessions/{session_id}/attempt", include_in_schema=False)
+@app.post("/sessions/{session_id}/attempt")
 def user_attempt():
     """
-    Submits a user's response
+    Stores the user's attempt in a variable. All attempts are later
+    summarised by AI and saved as a report.
     """
-    pass
+    session_responses = []
 
 
 @app.post("/sessions/{session_id}/complete", include_in_schema=False)

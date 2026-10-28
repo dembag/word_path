@@ -2,26 +2,24 @@
 from datetime import datetime
 
 
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, Literal
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from typing import Annotated, Any, Literal
 
+SESSION_QUESTION_COUNT = 5
 
 AgeBand = Literal["0-5", "6-9", "10-13", "14-17", "18+"]
-
-PracticeFormat = Literal["choice", "sentence"]
-
-PromptDisplay = Literal["text_only", "symbols_and_text"]
-
 CardSize = Literal["small", "medium", "large"]
-
 CommunicationGoal = Literal[
     "requesting",
     "sharing_information",
     "social_interaction",
     "communication_repair",
 ]
-
+PracticeFormat = Literal["choice", "sentence"]
+PromptDisplay = Literal["text_only", "symbols_and_text"]
 SessionStatus = Literal["active", "completed"]
+
+NonBlankStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 # ------ User schema ------
@@ -102,6 +100,27 @@ class UserSymbolResponse(UserSymbolBase):
     user_id: int
 
 
+# ------ Question schema ------
+class LearnerQuestion(BaseModel):
+    question_id: int
+    prompt: NonBlankStr
+    available_symbol_ids: list[int] = Field(min_length=1)
+
+
+class GeneratedQuestion(LearnerQuestion):
+    # Allows access by dot notation to work eg. user.name
+    model_config = ConfigDict(from_attributes=True)
+
+    expected_response: list[int] = Field(min_length=1)
+
+
+class GeneratedQuestionBatch(BaseModel):
+    questions: list[GeneratedQuestion] = Field(
+        min_length=SESSION_QUESTION_COUNT,
+        max_length=SESSION_QUESTION_COUNT,
+    )
+
+
 # ------ Practice session schema ------
 class PracticeSessionBase(BaseModel):
     communication_goal: CommunicationGoal
@@ -116,7 +135,10 @@ class PracticeSessionResponse(PracticeSessionBase):
 
     session_id: int
     user_id: int
-    scenario: dict[str, Any]
+    questions: list[LearnerQuestion] = Field(
+        min_length=SESSION_QUESTION_COUNT,
+        max_length=SESSION_QUESTION_COUNT,
+    )
     started_at: datetime
     completed_at: datetime | None
 
@@ -125,3 +147,4 @@ class StartPracticeSession(BaseModel):
     user_id: int
     communication_goal: CommunicationGoal
     practice_format: PracticeFormat
+    location: str | None = Field(max_length=20, default=None)
