@@ -17,6 +17,7 @@ from api_schemas import (SymbolResponse, UserCreate, UserResponse,
                          UserSymbolCreate, UserSymbolResponse, UserUpdate)
 from api_schemas import StartPracticeSession, PracticeSessionResponse
 from data_models import PracticeSession
+import data_manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -229,7 +230,7 @@ def add_symbol():
     response_model=list[UserSymbolResponse],
     status_code=status.HTTP_200_OK,
 )
-def user_vocabulary(user_id: int, db: Annotated[Session, Depends(get_db)]):
+def display_user_vocabulary(user_id: int, db: Annotated[Session, Depends(get_db)]):
     """
     Displays the user's vocabulary.
     - Edit/delete symbols?
@@ -240,15 +241,9 @@ def user_vocabulary(user_id: int, db: Annotated[Session, Depends(get_db)]):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    return db.scalars(
-        select(dm.UserSymbol)
-        .where(dm.UserSymbol.user_id == user_id)
-        .order_by(
-            dm.UserSymbol.page,
-            dm.UserSymbol.position,
-            dm.UserSymbol.symbol_id,
-        )
-    ).all()
+
+    available_vocabulary = data_manager.get_user_vocabulary(db, user_id)
+    return available_vocabulary
 
 
 @app.post("/vocabulary/{user_id}", response_model=UserSymbolResponse)
@@ -278,30 +273,8 @@ def update_vocabulary(
             detail="Symbol is already in the vocabulary"
         )
 
-    # Find last position on selected page
-    last_symbol = db.scalars(
-        select(dm.UserSymbol)
-        .where(dm.UserSymbol.user_id == user_id)
-        .where(dm.UserSymbol.page == page)
-        .order_by(desc(dm.UserSymbol.position))
-    ).first()
-
-    if last_symbol is None:
-        position = 1
-    else:
-        position = last_symbol.position + 1
-
-    added_symbol = dm.UserSymbol(
-        user_id=user_id,
-        symbol_id=symbol_id,
-        page=page,
-        position=position
-    )
-    db.add(added_symbol)
-    db.commit()
-    db.refresh(added_symbol)
-
-    return added_symbol
+    updated_symbol = data_manager.update_user_vocabulary(db, user_id, symbol_id, page)
+    return updated_symbol
 
 
 @app.delete(
@@ -330,12 +303,9 @@ def remove_symbol_from_vocabulary(
             detail="Word is not in the vocabulary"
         )
 
-
     # Delete profile
     db.delete(word_to_remove)
     db.commit()
-
-
 
 
 @app.get("/vocabulary/{user_id}/suggestions", include_in_schema=False)

@@ -103,7 +103,8 @@ class UserSymbolResponse(UserSymbolBase):
 # ------ Question schema ------
 class LearnerQuestion(BaseModel):
     question_id: int
-    prompt: NonBlankStr
+    question: NonBlankStr
+    question_symbol_ids: list[int] = Field(min_length=1)
     available_symbol_ids: list[int] = Field(min_length=1)
 
 
