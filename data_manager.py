@@ -3,6 +3,8 @@ import os
 from sqlalchemy import create_engine, desc, select
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
+from api_schemas import UserSymbolResponse
+
 DATABASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(DATABASE_DIR, exist_ok=True)
 
@@ -26,19 +28,33 @@ def get_db():
 
 
 # ------ User Vocabulary ------
-def get_user_vocabulary(db: Session, user_id: int):
+def get_user_vocabulary(db: Session, user_id: int) -> list[UserSymbolResponse]:
     """Gets a specific users' vocabulary."""
     import data_models as dm
 
-    return db.scalars(
-        select(dm.UserSymbol)
-        .where(dm.UserSymbol.user_id == user_id)
-        .order_by(
-            dm.UserSymbol.page,
-            dm.UserSymbol.position,
-            dm.UserSymbol.symbol_id,
+    rows = (
+        db.execute(
+            select(
+                dm.UserSymbol.user_id,
+                dm.UserSymbol.symbol_id,
+                dm.UserSymbol.page,
+                dm.UserSymbol.position,
+                dm.Symbol.word,
+                dm.Symbol.word_class,
+            )
+            .join(dm.Symbol, dm.UserSymbol.symbol_id == dm.Symbol.symbol_id)
+            .where(dm.UserSymbol.user_id == user_id)
+            .order_by(
+                dm.UserSymbol.page,
+                dm.UserSymbol.position,
+                dm.UserSymbol.symbol_id,
+            )
         )
-    ).all()
+        .mappings()
+        .all()
+    )
+
+    return [UserSymbolResponse.model_validate(dict(row)) for row in rows]
 
 
 def update_user_vocabulary(

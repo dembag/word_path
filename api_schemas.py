@@ -83,21 +83,25 @@ class SymbolResponse(SymbolBase):
 
 
 class UserSymbolBase(BaseModel):
+    # Allows access by dot notation to work eg. user.name
+    model_config = ConfigDict(from_attributes=True)
 
+    user_id: int
     symbol_id: int
     page: str = Field(min_length=1, max_length=20)
     position: int
 
 
-class UserSymbolCreate(UserSymbolBase):
-    pass
-
-
-class UserSymbolResponse(UserSymbolBase):
+class UserSymbolResponse(BaseModel):
     # Allows access by dot notation to work eg. user.name
     model_config = ConfigDict(from_attributes=True)
 
     user_id: int
+    symbol_id: int
+    page: str = Field(min_length=1, max_length=20)
+    position: int
+    word: str = Field(min_length=1, max_length=20)
+    word_class: str = Field(min_length=1, max_length=20)
 
 
 # ------ Question schema ------

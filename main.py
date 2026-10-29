@@ -13,8 +13,14 @@ from data_manager import Base, engine, get_db, SessionLocal
 from dummy_data import SCENARIOS, SYMBOL_CATALOG
 import data_models as dm
 
-from api_schemas import (SymbolResponse, UserCreate, UserResponse,  
-                         UserSymbolCreate, UserSymbolResponse, UserUpdate)
+from api_schemas import (
+    SymbolResponse,
+    UserCreate,
+    UserResponse,
+    UserSymbolBase,
+    UserSymbolResponse,
+    UserUpdate,
+)
 from api_schemas import StartPracticeSession, PracticeSessionResponse
 from data_models import PracticeSession
 import data_manager
@@ -246,7 +252,7 @@ def display_user_vocabulary(user_id: int, db: Annotated[Session, Depends(get_db)
     return available_vocabulary
 
 
-@app.post("/vocabulary/{user_id}", response_model=UserSymbolResponse)
+@app.post("/vocabulary/{user_id}", response_model=UserSymbolBase)
 def update_vocabulary(
         user_id: int, symbol_id: int, page: str,
         db: Annotated[Session, Depends(get_db)]
@@ -343,6 +349,38 @@ def start_session(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Requested communication goal is not enabled in user's profile",
         )
+
+    # Check if location is set, otherwise use random location or none
+    if practice_format != user.starting_format:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Requested session format is not selected in user's profile",
+        )
+
+    if start_session.location is not None:
+        if start_session.location not in user.locations:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Requested location is not saved in user's profile",
+            )
+        location = start_session.location
+    elif user.locations:
+        location = random.choice(user.locations)
+    else:
+        location = None
+
+    # Get user's available vocabulary
+    available_vocabulary = data_manager.get_user_vocabulary(db, start_session.user_id)
+
+    if len(available_vocabulary) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="No vocabulary found for this user",
+        )
+
+    # ------ Call Question generator ------
+    # pass communication_goal, practice_format, location,
+    # available_vocabulary, age_band
 
     # ----Get fixed test scenario from dummy_data.py for test ----
     available_scenarios = [

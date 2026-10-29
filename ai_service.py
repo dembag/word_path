@@ -11,6 +11,8 @@ from api_schemas import (
     GeneratedQuestionBatch,
     SESSION_QUESTION_COUNT,
 )
+from api_schemas import UserSymbolResponse
+from word_path.data_models import Symbol
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -60,8 +62,11 @@ def validate_question_symbols(
 
 
 def generate_questions(
-    prompt: str,
-    approved_symbol_ids: set[int],
+    communication_goal: str,
+    practice_format: str,
+    location: str,
+    age_band: str,
+    available_vocabulary: list[UserSymbolResponse],
 ) -> list[GeneratedQuestion]:
     """Asks LLM to generate practice session questions."""
     client = get_openai_client()
@@ -69,8 +74,26 @@ def generate_questions(
     if not OPENAI_MODEL or not OPENAI_MODEL.strip():
         raise LLMConfigurationError("LLM model is not configured")
 
-    feedback = None
+    available_vocabulary_ids = {symbol.symbol_id for symbol in available_vocabulary}
 
+    system_prompt = (
+        "You are a speech therapist helping someone learn how to communicate"
+        "using their touch-screen communication device."
+        f"You create exactly {SESSION_QUESTION_COUNT} practice questions."
+        "You must follow the instructions."
+    )
+
+    user_prompt = (
+        "Instructions: "
+        "- Use only the "
+        f"available_vocabulary: {available_vocabulary}"
+        f"age_band: {age_band} years old"
+        f"communication_goal: {communication_goal}"
+        f"practice_format: {practice_format}"
+        f"location: {location}"
+    )
+
+    feedback = None
     for attempt in range(2):
         request_prompt = prompt
         if feedback:
@@ -78,19 +101,18 @@ def generate_questions(
                 "\n\nGenerate a new batch that fixes this validation issue: "
                 f"{feedback}"
             )
-
         try:
             response = client.chat.completions.parse(
                 model=OPENAI_MODEL,
                 messages=[
                     {
                         "role": "system",
-                        "content": (
-                            f"You create exactly {SESSION_QUESTION_COUNT} "
-                            "practice questions."
-                        ),
+                        "content": system_prompt,
                     },
-                    {"role": "user", "content": request_prompt},
+                    {
+                        "role": "user",
+                        "content": user_prompt
+                    },
                 ],
                 response_format=GeneratedQuestionBatch,
             )
@@ -114,7 +136,7 @@ def generate_questions(
 
         questions = message.parsed.questions
         try:
-            validate_question_symbols(questions, approved_symbol_ids)
+            validate_question_symbols(questions, available_vocabulary_ids)
             return questions
         except ValueError as error:
             if attempt == 1:
