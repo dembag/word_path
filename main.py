@@ -14,6 +14,9 @@ from dummy_data import SCENARIOS, SYMBOL_CATALOG
 import data_models as dm
 
 from api_schemas import (
+    GeneratedQuestionBatch,
+    PracticeSessionResponse,
+    StartPracticeSession,
     SymbolResponse,
     UserCreate,
     UserResponse,
@@ -21,9 +24,9 @@ from api_schemas import (
     UserSymbolResponse,
     UserUpdate,
 )
-from api_schemas import StartPracticeSession, PracticeSessionResponse
-from data_models import PracticeSession
+
 import data_manager
+import ai_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -326,22 +329,23 @@ def user_vocabulary():
 # ------ Practice sessions ------
 @app.post("/sessions", response_model=PracticeSessionResponse)
 def start_session(
-    start_session: StartPracticeSession, db: Annotated[Session, Depends(get_db)]
+    start_practice_session: StartPracticeSession,
+    db: Annotated[Session, Depends(get_db)],
 ):
     """
     Starts a practice session
     - Scoped to the user's vocabulary and learning phase
-    :type start_session: StartPracticeSession
+    :type start_practice_session: StartPracticeSession
     """
-    user = db.get(dm.User, start_session.user_id)
+    user = db.get(dm.User, start_practice_session.user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
 
-    communication_goal = start_session.communication_goal
-    practice_format = start_session.practice_format
+    communication_goal = start_practice_session.communication_goal
+    practice_format = start_practice_session.practice_format
 
     # Check the goal and format is enabled in user profile
     if communication_goal not in user.communication_goals:
@@ -350,27 +354,29 @@ def start_session(
             detail="Requested communication goal is not enabled in user's profile",
         )
 
-    # Check if location is set, otherwise use random location or none
     if practice_format != user.starting_format:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Requested session format is not selected in user's profile",
         )
 
-    if start_session.location is not None:
-        if start_session.location not in user.locations:
+    # Check if location is set, otherwise use random location or none
+    if start_practice_session.location is not None:
+        if start_practice_session.location not in user.locations:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail="Requested location is not saved in user's profile",
             )
-        location = start_session.location
+        location = start_practice_session.location
     elif user.locations:
         location = random.choice(user.locations)
     else:
         location = None
 
     # Get user's available vocabulary
-    available_vocabulary = data_manager.get_user_vocabulary(db, start_session.user_id)
+    available_vocabulary = data_manager.get_user_vocabulary(
+        db, start_practice_session.user_id
+    )
 
     if len(available_vocabulary) == 0:
         raise HTTPException(
@@ -381,25 +387,33 @@ def start_session(
     # ------ Call Question generator ------
     # pass communication_goal, practice_format, location,
     # available_vocabulary, age_band
-
-    # ----Get fixed test scenario from dummy_data.py for test ----
-    available_scenarios = [
-        item
-        for item in SCENARIOS
-        if item.get("goal") == communication_goal
-        and item.get("format") == practice_format
-    ]
-
-    if not available_scenarios:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No compatible scenario found",
+    try:
+        generated_batch: GeneratedQuestionBatch = ai_service.generate_questions(
+            communication_goal,
+            practice_format,
+            location,
+            user.age_band,
+            available_vocabulary,
         )
+    except (
+        ai_service.LLMConfigurationError,
+        ai_service.LLMProviderError,
+        ValueError,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Question generation is temporarily unavailable. Please try again.",
+        ) from None
 
-    scenario = random.choice(available_scenarios)
+    scenario = {
+        "location": location,
+        "questions": [
+            question.model_dump(mode="json") for question in generated_batch.questions
+        ],
+    }
 
     practice_session = dm.PracticeSession(
-        user_id=start_session.user_id,
+        user_id=start_practice_session.user_id,
         communication_goal=communication_goal,
         practice_format=practice_format,
         scenario=scenario,

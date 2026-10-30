@@ -14,8 +14,8 @@
 
 ## 2. AI-backed session start
 
-- [ ] 2.1 Resolve and validate learner, goal, format, vocabulary, and optional location before generation; verify a chosen saved location is honored, an omitted location is selected from saved locations, and an empty location list adds no location constraint.
-- [ ] 2.2 Replace fixture-based production session creation with validated AI batch generation and persist only after all five questions pass validation; verify a failed generation creates no session and does not fall back to `SCENARIOS`.
+- [x] 2.1 Resolve and validate learner, goal, format, vocabulary, and optional location before generation; verify a chosen saved location is honored, an omitted location is selected from saved locations, and an empty location list adds no location constraint.
+- [x] 2.2 Replace fixture-based production session creation with validated AI batch generation and persist only after all five questions pass validation; verify a failed generation creates no session and does not fall back to `SCENARIOS`.
 - [ ] 2.3 Update the session response to return learner-facing questions and resolved context while keeping stored expected responses private; verify the API response contains exactly five questions and no answer key.
 - [ ] 2.4 Confirm existing SQLite session rows remain intact and new sessions can be read after an app restart; verify no table drop or database recreation is used.
 

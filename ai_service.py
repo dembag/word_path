@@ -5,14 +5,12 @@ import logging
 from dotenv import load_dotenv
 from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 
-
 from api_schemas import (
     GeneratedQuestion,
     GeneratedQuestionBatch,
     SESSION_QUESTION_COUNT,
+    UserSymbolResponse,
 )
-from api_schemas import UserSymbolResponse
-
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -89,7 +87,7 @@ def generate_questions(
     location: str | None,
     age_band: str,
     available_vocabulary: list[UserSymbolResponse],
-) -> list[GeneratedQuestion]:
+) -> GeneratedQuestionBatch:
     """Asks LLM to generate practice session questions."""
     client = get_openai_client()
 
@@ -203,8 +201,8 @@ def generate_questions(
                 practice_format,
                 location,
             )
+            return GeneratedQuestionBatch(questions=questions)
 
-            return questions
         except ValueError as error:
             if attempt == 1:
                 raise ValueError(

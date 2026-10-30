@@ -18,6 +18,7 @@ The current `POST /sessions` selects one object from `dummy_data.SCENARIOS` and 
 
 - Retrieval augmented generation, embeddings, recommendations, or autonomous learner-profile changes.
 - Frontend work, durable event-by-event analytics, or surviving in-progress sessions after process restart.
+- Future extension: persist unfinished sessions and their response events so a learner can resume after an app restart, likely using the existing SQLite database.
 - Replacing fixed fixture scenarios for manual testing; they are simply not a fallback for production session creation.
 
 ## Decisions
