@@ -107,6 +107,9 @@ class UserSymbolResponse(BaseModel):
 # ------ Question schema ------
 class LearnerQuestion(BaseModel):
     question_id: int
+    location: NonBlankStr | None = Field(max_length=20, default=None)
+    question_format: PracticeFormat
+    communication_goal: CommunicationGoal
     question: NonBlankStr
     question_symbol_ids: list[int] = Field(min_length=1)
     available_symbol_ids: list[int] = Field(min_length=1)
@@ -130,6 +133,7 @@ class GeneratedQuestionBatch(BaseModel):
 class PracticeSessionBase(BaseModel):
     communication_goal: CommunicationGoal
     practice_format: PracticeFormat
+    location: str | None = Field(max_length=20, default=None)
     session_status: SessionStatus = Field(default="active")
     summary: dict[str, Any] | None = None
 

@@ -9,7 +9,7 @@
 
 - [x] 1.1 Add typed internal and learner-facing question/session schemas, including optional location and a five-question response; verify schema validation accepts valid choice and sentence batches and rejects malformed output.
 - [x] 1.2 Add OpenAI configuration loading and a small generation service using the existing package; verify missing credentials and provider errors become handled application errors without exposing secrets.
-- [ ] 1.3 Implement structured batch generation with one bounded correction attempt and vocabulary/context validation; verify every returned symbol belongs to the learner's approved vocabulary and expected responses are omitted from public questions.
+- [x] 1.3 Implement structured batch generation with one bounded correction attempt and vocabulary/context validation; verify every returned symbol belongs to the learner's approved vocabulary and expected responses are omitted from public questions.
 - [x] 1.4 Document required OpenAI environment variables and local session-generation behavior; verify setup instructions match `.env.example`.
 
 ## 2. AI-backed session start
