@@ -16,12 +16,12 @@
 
 - [x] 2.1 Resolve and validate learner, goal, format, vocabulary, and optional location before generation; verify a chosen saved location is honored, an omitted location is selected from saved locations, and an empty location list adds no location constraint.
 - [x] 2.2 Replace fixture-based production session creation with validated AI batch generation and persist only after all five questions pass validation; verify a failed generation creates no session and does not fall back to `SCENARIOS`.
-- [ ] 2.3 Update the session response to return learner-facing questions and resolved context while keeping stored expected responses private; verify the API response contains exactly five questions and no answer key.
-- [ ] 2.4 Confirm existing SQLite session rows remain intact and new sessions can be read after an app restart; verify no table drop or database recreation is used.
+- [x] 2.3 Update the session response to return learner-facing questions and resolved context while keeping stored expected responses private; verify the API response contains exactly five questions and no answer key.
+- [x] 2.4 Confirm existing SQLite session rows remain intact and new sessions can be read after an app restart; verify no table drop or database recreation is used.
 
 ## 3. Runtime response events and measures
 
-- [ ] 3.1 Define and implement response submission for a question in an active session, including response order and any support level needed for scoring; verify unknown questions and inactive sessions return errors without recording events.
+- [x] 3.1 Define and implement response submission for a question in an active session, including response order and any support level needed for scoring; verify unknown questions and inactive sessions return errors without recording events.
 - [ ] 3.2 Calculate and persist objective measures from runtime events when a session completes; document the formulas and verify the saved counts and rates match a manually worked sample session.
 - [ ] 3.3 Clear transient response events after completion; verify completed session measures remain available while raw trial events do not.
 

@@ -14,9 +14,11 @@ from dummy_data import SCENARIOS, SYMBOL_CATALOG
 import data_models as dm
 
 from api_schemas import (
+    AnswerRecorded,
     GeneratedQuestionBatch,
     PracticeSessionResponse,
     StartPracticeSession,
+    SubmitAnswer,
     SymbolResponse,
     UserCreate,
     UserResponse,
@@ -27,6 +29,7 @@ from api_schemas import (
 
 import data_manager
 import ai_service
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,6 +45,9 @@ app = FastAPI(lifespan=lifespan)
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+
+
+session_answers: dict[int, list[dict]] = {}
 
 
 # ------ Users ------
@@ -424,24 +430,75 @@ def start_session(
     db.commit()
     db.refresh(practice_session)
 
-    return practice_session
+    return {
+        "session_id": practice_session.session_id,
+        "user_id": practice_session.user_id,
+        "communication_goal": practice_session.communication_goal,
+        "practice_format": practice_session.practice_format,
+        "location": practice_session.scenario.get("location"),
+        "session_status": practice_session.session_status,
+        "summary": practice_session.summary,
+        "questions": [
+            {
+                key: value
+                for key, value in question.items()
+                if key != "expected_response"
+            }
+            for question in practice_session.scenario.get("questions", [])
+        ],
+        "started_at": practice_session.started_at,
+        "completed_at": practice_session.completed_at,
+    }
 
 
-@app.post("/sessions/{session_id}/scenario", include_in_schema=False)
-def generate_scenario():
-    """
-    LLM generates a scenario
-    """
-    pass
-
-
-@app.post("/sessions/{session_id}/attempt")
-def user_attempt():
+@app.post("/sessions/{session_id}/attempt", response_model=AnswerRecorded)
+def user_attempt(
+    session_id: int,
+    answer: SubmitAnswer,
+    db: Annotated[Session, Depends(get_db)],
+):
     """
     Stores the user's attempt in a variable. All attempts are later
     summarised by AI and saved as a report.
     """
-    session_responses = []
+    current_practice_session = db.get(dm.PracticeSession, session_id)
+    if current_practice_session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Practice session not found",
+        )
+    if current_practice_session.session_status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot submit an answer to a completed session",
+        )
+
+    questions = current_practice_session.scenario.get("questions", [])
+    question_exists = any(
+        question.get("question_id") == answer.question_id for question in questions
+    )
+
+    if not question_exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question not found in this session",
+        )
+
+    answers_for_session = session_answers.setdefault(session_id, [])
+    event = {
+        "question_id": answer.question_id,
+        "answer_symbol_ids": answer.answer_symbol_ids.copy(),
+        "support_level": answer.support_level,
+        "response_order": len(answers_for_session) + 1,
+    }
+    answers_for_session.append(event)
+
+    return {
+        "session_id": session_id,
+        "question_id": answer.question_id,
+        "response_order": event["response_order"],
+        "recorded": True,
+    }
 
 
 @app.post("/sessions/{session_id}/complete", include_in_schema=False)

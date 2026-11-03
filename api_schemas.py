@@ -18,6 +18,7 @@ CommunicationGoal = Literal[
 PracticeFormat = Literal["choice", "sentence"]
 PromptDisplay = Literal["text_only", "symbols_and_text"]
 SessionStatus = Literal["active", "completed"]
+SupportLevel = Literal["independent", "verbal_prompt", "modeled"]
 
 NonBlankStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
@@ -157,3 +158,17 @@ class StartPracticeSession(BaseModel):
     communication_goal: CommunicationGoal
     practice_format: PracticeFormat
     location: str | None = Field(max_length=20, default=None)
+
+
+# ----- Answer schema -----
+class SubmitAnswer(BaseModel):
+    question_id: int
+    answer_symbol_ids: list[int] = Field(min_length=1)
+    support_level: SupportLevel
+
+
+class AnswerRecorded(BaseModel):
+    session_id: int
+    question_id: int
+    response_order: int
+    recorded: Literal[True]
