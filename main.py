@@ -1,5 +1,5 @@
 import random
-from operator import itemgetter
+from datetime import datetime, UTC
 
 from fastapi import Depends, FastAPI, Request, HTTPException, status
 from fastapi.templating import Jinja2Templates
@@ -19,6 +19,7 @@ from api_schemas import (
     PracticeSessionResponse,
     StartPracticeSession,
     SubmitAnswer,
+    SummaryInformation,
     SymbolResponse,
     UserCreate,
     UserResponse,
@@ -484,14 +485,53 @@ def user_attempt(
             detail="Question not found in this session",
         )
 
+    presented_at = answer.question_presented_at
+    verbal_at = answer.verbal_prompt_at
+    modeled_at = answer.modeled_prompt_at
+
+    timestamps = [presented_at, verbal_at, modeled_at]
+    if any(
+        value is not None and (value.tzinfo is None or value.utcoffset() is None)
+        for value in timestamps
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Answer timestamps must include a timezone",
+        )
+
+    if verbal_at is not None and verbal_at < presented_at:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Verbal prompt cannot precede question presentation",
+        )
+
+    if modeled_at is not None and modeled_at < (verbal_at or presented_at):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Modeled prompt must follow question presentation and any verbal prompt",
+        )
+
+    support_level: str = (
+        "modeled"
+        if modeled_at is not None
+        else "verbal_prompt" if verbal_at is not None else "independent"
+    )
+    answered_at = datetime.now(UTC)
+
     answers_for_session = session_answers.setdefault(session_id, [])
     event = {
         "question_id": answer.question_id,
         "answer_symbol_ids": answer.answer_symbol_ids.copy(),
-        "support_level": answer.support_level,
+        "support_level": support_level,
+        "presented_at": presented_at,
+        "verbal_prompt_at": verbal_at,
+        "modeled_prompt_at": modeled_at,
+        "answered_at": answered_at,
         "response_order": len(answers_for_session) + 1,
     }
     answers_for_session.append(event)
+
+    print(answers_for_session)
 
     return {
         "session_id": session_id,
@@ -501,13 +541,161 @@ def user_attempt(
     }
 
 
-@app.post("/sessions/{session_id}/complete", include_in_schema=False)
-def end_session():
+@app.post(
+    "/sessions/{session_id}/complete",
+    response_model=PracticeSessionResponse,
+)
+def end_session(session_id: int, db: Annotated[Session, Depends(get_db)]):
     """
     Ends the practice session
     - update progression
     """
-    pass
+    practice_session = db.get(dm.PracticeSession, session_id)
+
+    if practice_session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Practice session cannot be found",
+        )
+
+    if practice_session.session_status == "completed":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Practice session is already completed",
+        )
+
+    session_questions = practice_session.scenario["questions"]
+    events_by_question = {
+        event["question_id"]: event for event in session_answers.get(session_id, [])
+    }
+
+    correct_count = 0
+    answered_count = 0
+    independent_count = 0
+    verbal_count = 0
+    modeled_count = 0
+    summary_data = []
+
+    for question in session_questions:
+        event = events_by_question.get(question["question_id"])
+        if event is None:
+            continue
+
+        elapsed_seconds = (event["answered_at"] - event["presented_at"]).total_seconds()
+        if elapsed_seconds < 0:
+            continue
+
+        answered_count += 1
+        if event["answer_symbol_ids"] == question["expected_response"]:
+            correct_count += 1
+
+        if elapsed_seconds < 10:
+            independence = "independent"
+            independent_count += 1
+        elif elapsed_seconds < 20:
+            independence = "verbal_prompt"
+            verbal_count += 1
+        else:
+            independence = "modeled"
+            modeled_count += 1
+
+        answer_words = []
+        for symbol_id in event["answer_symbol_ids"]:
+            symbol = db.get(dm.Symbol, symbol_id)
+            if symbol is not None:
+                answer_words.append(symbol.word)
+
+        available_words = []
+        for symbol_id in question["available_symbol_ids"]:
+            symbol = db.get(dm.Symbol, symbol_id)
+            if symbol is not None:
+                available_words.append(symbol.word)
+
+        expected_response_words = []
+        for symbol_id in question["expected_response"]:
+            symbol = db.get(dm.Symbol, symbol_id)
+            if symbol is not None:
+                expected_response_words.append(symbol.word)
+
+        summary_data.append(
+            {
+                "question_id": question["question_id"],
+                "question": question["question"],
+                "available_ids": question["available_symbol_ids"],
+                "available_words": available_words,
+                "expected_response_ids": question["expected_response"],
+                "expected_response_words": expected_response_words,
+                "response_ids": event["answer_symbol_ids"],
+                "response_words": answer_words,
+                "correct": event["answer_symbol_ids"] == question["expected_response"],
+                "independence": independence,
+            }
+        )
+
+    correct_percent = (correct_count / answered_count) * 100 if answered_count else None
+    independent_percent = (
+        (independent_count / answered_count) * 100 if answered_count else None
+    )
+    verbal_percent = (verbal_count / answered_count) * 100 if answered_count else None
+    modeled_percent = (modeled_count / answered_count) * 100 if answered_count else None
+
+    practice_session.summary = {
+        "results": {
+            "total_questions": len(session_questions),
+            "answered_count": answered_count,
+            "correct_count": correct_count,
+            "accuracy": correct_percent,
+            "independent": independent_percent,
+            "verbal_prompt": verbal_percent,
+            "modeled": modeled_percent,
+        },
+        "question_results": summary_data,
+    }
+
+    # Update the database
+    practice_session.session_status = "completed"
+    practice_session.completed_at = datetime.now(UTC)
+
+    db.commit()
+    db.refresh(practice_session)
+
+    # Generate the review
+    summary_information = SummaryInformation(
+        communication_goal=practice_session.communication_goal,
+        practice_format=practice_session.practice_format,
+        location=practice_session.scenario["location"],
+        results=practice_session.summary["results"],
+        question_results=summary_data,
+    )
+    generated_review = ai_service.generate_review(summary_information)
+    practice_session.summary = {
+        **practice_session.summary,
+        "review": generated_review.review,
+    }
+    db.commit()
+    db.refresh(practice_session)
+
+    session_answers.pop(session_id, None)
+
+    return {
+        "session_id": practice_session.session_id,
+        "user_id": practice_session.user_id,
+        "communication_goal": practice_session.communication_goal,
+        "practice_format": practice_session.practice_format,
+        "location": practice_session.scenario.get("location"),
+        "session_status": practice_session.session_status,
+        "summary": practice_session.summary,
+        "questions": [
+            {
+                key: value
+                for key, value in question.items()
+                if key != "expected_response"
+            }
+            for question in practice_session.scenario.get("questions", [])
+        ],
+        "started_at": practice_session.started_at,
+        "completed_at": practice_session.completed_at,
+    }
 
 
 @app.get("/users/{user_id}/progression", include_in_schema=False)

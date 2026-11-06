@@ -11,13 +11,14 @@ The current `POST /sessions` selects one object from `dummy_data.SCENARIOS` and 
 - Keep session creation and completion in the existing FastAPI and SQLite application.
 - Generate and validate five questions in one AI request before creating an active session.
 - Keep internal expected responses separate from the learner-facing question response.
-- Retain response events in process memory and persist calculated measures with a completed session.
+- Retain raw response events in process memory, then persist calculated measures and derived per-question display results with a completed session.
 - Make AI narrative generation a separate completion step whose failure does not discard measured results.
 
 **Non-Goals:**
 
 - Retrieval augmented generation, embeddings, recommendations, or autonomous learner-profile changes.
 - Frontend work, durable event-by-event analytics, or surviving in-progress sessions after process restart.
+- Persisting raw response events, timestamps, or prompt events after completion; completed sessions retain derived results only.
 - Future extension: persist unfinished sessions and their response events so a learner can resume after an app restart, likely using the existing SQLite database.
 - Replacing fixed fixture scenarios for manual testing; they are simply not a fallback for production session creation.
 
@@ -49,13 +50,24 @@ Change the model and response contract from a single `scenario` to a `questions`
 
 ### Keep response events transient and measurements deterministic
 
-Use a process-local mapping keyed by session ID for response events, including question identifier, response, submission time, and any explicitly recorded support/prompt level needed for independence measures. Validate session status and question membership before adding events. On completion, calculate the agreed counts, accuracy, independence, and response-time measures in Python; document the formulas and represent unavailable measures as unavailable instead of guessing. Save those measures before requesting narrative text, then clear response events.
+Use a process-local mapping keyed by session ID for response events, including question identifier, ordered response symbols, presentation time, prompt times, response time, and support level. The application derives the completed-session category from elapsed time; prompt markers do not override that classification, and the application does not trust a support-level value supplied by the client. Validate session status and question membership before adding events.
 
-**Alternative considered:** Ask the model to score responses or store every trial. Model scoring is not reproducible, while event persistence is outside the lightweight MVP and the agreed transient-event design.
+Use these timing rules:
+
+- An answer with a negative elapsed time is invalid and excluded.
+- An answer submitted in under 10 seconds is independent.
+- An answer submitted from 10 to under 20 seconds is verbally prompted.
+- An answer submitted at 20 seconds or later is modeled; there is no 30-second cutoff.
+- A question with no submitted answer when the session is completed is unanswered.
+- Measure elapsed time from question presentation to answer submission. Compare the ordered submitted symbol IDs with the stored expected response to determine correctness; report correctness separately from the elapsed-time category.
+
+On completion, calculate counts, accuracy, independence, and other measures in Python; represent unavailable measures as unavailable instead of guessing. Persist aggregate measures and display-ready per-question results (question text, available symbols, selected symbols, correctness, and elapsed-time category) in the session summary. Do not persist raw timestamps or prompt events. Save these results before requesting narrative text, then clear the raw response events.
+
+**Alternative considered:** Ask the model to score responses or persist raw trials. Model scoring is not reproducible, while raw event persistence is outside the lightweight MVP. Derived per-question results are retained only to display the completed session accurately.
 
 ### Treat narrative text as optional enrichment
 
-Generate the narrative from the stored session context and already-computed measures. Store it separately from the measurements in the summary JSON. If narrative generation fails, preserve completion and measures and mark the narrative unavailable in the API response.
+Generate the narrative from the stored session context, already-computed measures, and derived per-question results. Store it separately from the structured results in the summary JSON. If narrative generation fails, preserve completion and measures and mark the narrative unavailable in the API response.
 
 **Alternative considered:** Roll back session completion on an AI summary failure. That would discard reliable evidence because a nonessential prose step failed.
 
@@ -63,7 +75,7 @@ Generate the narrative from the stored session context and already-computed meas
 
 - [Provider latency or outage prevents a new session] → Bound the request and correction attempt, return a recoverable error, and do not create a partial session.
 - [Generated content can still be inappropriate despite structural validation] → Restrict prompts to the learner context and approved vocabulary, validate every symbol reference, and keep this MVP's caregiver review/front-end flow in scope for later work.
-- [Process restart clears in-progress response events] → Document this local MVP limitation; only completed metrics are durable.
+- [Process restart clears in-progress response events] → Document this local MVP limitation; only completed measures and derived per-question display results are durable.
 - [Legacy session rows contain a single scenario] → Keep legacy data intact and make new response handling distinguish legacy rows from new question batches.
 - [SQLite JSON representations vary in shape] → Validate stored question and summary data through explicit Pydantic models at API boundaries.
 

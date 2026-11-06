@@ -1,23 +1,24 @@
 # Tasks
 
-## 1. Design checkpoint
+## Ownership
 
-- [ ] 1.1 After the backend API walkthrough is complete, discuss the learner journey, visual direction, accessibility needs, speech controls, and frontend approach with the user; record the agreed design in the change artifacts before starting UI code.
+- The assistant implements the learner interface after the design checkpoint and backend API contracts are confirmed. The user steers the experience and reviews the browser behavior.
+- Keep the implementation within FastAPI, Jinja, HTML, CSS, and focused JavaScript. Do not add a frontend framework or build pipeline without revisiting the design.
+
+## 1. Design and API checkpoint
+
+- [ ] 1.1 Complete the backend API walkthrough for profile selection/settings and the full session flow (start, response submission, and completion); confirm the request/response contracts for UI integration. The UI design decisions are recorded in the proposal, spec, and design artifacts.
 
 ## 2. Learner practice interface
 
-- [ ] 2.1 Build the agreed learner entry and session-start flow using enabled goals, supported formats, and the learner's profile; verify a learner can reach an active session through the browser.
-- [ ] 2.2 Present the scenario in the agreed prompt layout, honor the learner's prompt display setting, and provide prompt replay; verify both prompt modes and replay behavior in the browser.
-- [ ] 2.3 Render the learner's vocabulary in assigned page and position order, honor card size, and allow access to all symbols; verify the board order and scrolling behavior in the browser.
-- [ ] 2.4 Implement choice and sentence response composition, symbol speech, response editing, speak-and-submit, and acknowledgment behavior; verify the browser flow preserves selection order and submits the expected response.
-- [ ] 2.5 Connect session completion to the backend and present the resulting completion state; verify a finished browser session is saved by the session API.
+- [ ] 2.1 Build the profile splash and pre-session screen using existing learner profiles, enabled goals, and configured starting format; verify profile selection leads to the correct pre-session screen.
+- [ ] 2.2 Build full profile settings for name, age band, prompt display, starting format, communication goals, locations, and card size; save changes through the profile API and keep settings unavailable during active practice.
+- [ ] 2.3 Present each scenario in the top prompt panel, honor the learner's prompt display setting, and provide prompt replay; verify text-only and symbols-and-text modes.
+- [ ] 2.4 Render all profile vocabulary in assigned page and position order, honor card size, and allow board scrolling; in choice mode, dim and disable symbols outside the current question's available choices. Verify selection and board order in the browser.
+- [ ] 2.5 Implement choice and sentence response composition, automatic symbol speech, response editing, Speak, Clear, Submit, and acknowledgment behavior; verify selection order and submitted responses.
+- [ ] 2.6 Connect session completion to the backend and present the resulting completion state; verify the browser session is saved by the session API.
 
 ## 3. Integration and handoff
 
-- [ ] 3.1 Walk through a complete learner session in the browser, including session start, prompt replay, response submission, and completion; record and resolve any integration issues found.
-- [ ] 3.2 Update the local setup notes with how to launch and use the learner interface; verify the documented steps reach the UI in a browser.
-
-## Workflow follow-up
-
-- Discuss and agree on the UI design at task 1.1 before implementing tasks in section 2.
-- Keep the learner responsible for writing the implementation; use the assistant for step-by-step guidance and code review.
+- [ ] 3.1 Walk through a complete learner session in the browser, including profile selection, settings, session start, prompt replay, response submission, and completion; record and resolve integration issues found.
+- [ ] 3.2 Update local setup notes with how to launch and use the learner interface; verify the documented steps reach the UI in a browser.

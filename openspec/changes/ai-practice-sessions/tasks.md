@@ -22,11 +22,11 @@
 ## 3. Runtime response events and measures
 
 - [x] 3.1 Define and implement response submission for a question in an active session, including response order and any support level needed for scoring; verify unknown questions and inactive sessions return errors without recording events.
-- [ ] 3.2 Calculate and persist objective measures from runtime events when a session completes; document the formulas and verify the saved counts and rates match a manually worked sample session.
-- [ ] 3.3 Clear transient response events after completion; verify completed session measures remain available while raw trial events do not.
+- [x] 3.2 Calculate and persist objective measures plus display-ready per-question results when a session completes; document the formulas and verify saved counts, rates, and question details against a manually worked sample session. Keep raw timestamps and prompt events transient.
+- [x] 3.3 Clear transient response events after completion; verify completed session measures remain available while raw trial events do not.
 
 ## 4. Caregiver narrative and end-to-end flow
 
-- [ ] 4.1 Generate a caregiver-friendly narrative from stored context and app-calculated measures, and store it separately from metrics; verify the AI is not asked to calculate counts or rates.
+- [ ] 4.1 Generate a caregiver-friendly narrative from stored context, app-calculated measures, and per-question results; store the narrative separately from structured results and verify the AI is not asked to calculate counts or rates.
 - [ ] 4.2 Preserve completed status and measures when narrative generation fails, and expose narrative unavailability in the API response; verify this path through a controlled provider failure.
 - [ ] 4.3 Walk through session start, all five responses, completion, and summary retrieval using the API docs or simple HTTP requests; verify successful generation, validation failure, and narrative failure paths.

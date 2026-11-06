@@ -2,45 +2,67 @@
 
 ## Context
 
-See proposal.md for motivation and specs/aac-practice-ui/spec.md for the learner-visible behavior. The project is a FastAPI app with Jinja2 installed and two starter templates (`layout.html` and `home.html`). The existing backend change is building JSON endpoints for profiles, vocabulary, and practice sessions. The UI should use those endpoints and remain approachable for a course MVP.
+The project is a FastAPI application with Jinja2 installed, starter templates in `templates/`, and JSON endpoints for learner profiles, vocabulary, and practice sessions. The `prototype/` directory contains a landscape tablet-style AAC board with a top message strip, Speak and Clear actions, and three fixed color-separated vocabulary sections. This change adapts that visual language to the practice session API and adds profile selection and settings.
 
 ## Goals / Non-Goals
 
 **Goals:**
 
-- Give the learner a direct browser path through a practice session.
-- Keep the implementation small enough for the learner to understand and maintain.
-- Agree on the visual design and interaction flow with the user before writing interface code.
+- Give learners a direct browser path from profile selection through a complete practice session.
+- Preserve the prototype's landscape tablet layout, color-separated board sections, message strip, and stable vocabulary positions.
+- Provide a profile splash page and full profile settings before a session starts.
+- Keep the implementation understandable and within the existing FastAPI, Jinja, HTML, CSS, and JavaScript stack.
+- Connect profile, vocabulary, and session interactions to existing API endpoints.
 
 **Non-Goals:**
 
-- Add a frontend framework or build pipeline before the design discussion establishes a need.
-- Build caregiver analytics, recommendation review, AI generation, or ARASAAC search in this change.
+- Creating or deleting learner profiles in the interface.
+- Opening profile settings during an active practice session.
+- Adding a frontend framework, build pipeline, caregiver analytics, recommendations, or AI integration.
+- Replacing the prototype's AAC board visual language.
 
 ## Decisions
 
-### Make design discussion the first implementation checkpoint
+### Use a profile splash and a pre-session screen
 
-After the backend API flow is complete, discuss the learner journey, page layout, visual direction, accessibility needs, speech controls, and technical approach with the user. Confirm the design and update this change's design, specs, and tasks before implementing the interface. The user requested this checkpoint so design choices can be made with them when the work reaches the UI stage.
+The splash page lists existing profiles. Selecting a profile opens a pre-session screen with the learner's profile summary, enabled communication goals, configured starting format, a Start Practice action, and a Settings action. Settings opens the selected learner's full profile editor. Saving settings returns to the pre-session screen. Once a session starts, the active practice view has no Settings action; the profile cannot be changed mid-session.
 
-### Start from the existing FastAPI and Jinja setup
+Profile selection and editing use the existing `/users`, `/users/{user_id}`, and `PATCH /users/{user_id}` APIs. The settings editor covers the profile fields already supported by `UserUpdate`: name, age band, prompt display, starting format, communication goals, locations, and card size. Profile creation and deletion remain outside this interface.
 
-The project already has Jinja2 and starter templates, with no frontend package manifest or build pipeline. The initial recommendation is to build on those templates and add only the browser-side behavior needed for interactive practice. Compare that approach with a client-rendered frontend at the design checkpoint; do not add a framework or dependency without agreement.
+### Preserve the prototype's landscape board
 
-### Keep the UI connected to the backend session flow
+Use a landscape tablet presentation as the primary target. Keep the prototype's color-separated sections and assigned tile positions stable. Scale the board to the available landscape viewport while retaining the relationship among the prompt, response, and vocabulary areas.
 
-The interface should start sessions, load the active prompt and learner vocabulary, submit responses, and complete sessions through the backend APIs. It should not write directly to the database or persist individual response events outside the session flow.
+### Place prompt, response, and vocabulary in separate areas
+
+During practice, show the current scenario in a prompt panel at the top, with prompt replay. Follow it with the prototype's persistent message strip, extended with Speak, Clear, and Submit controls. Keep the color-separated vocabulary board below. Honor the learner's text-only or symbols-and-text prompt setting.
+
+When a symbol is selected, add it to the message strip in selection order and speak its word. Speak plays the composed message; Clear removes the current composition; Submit speaks the composed response and submits it to the active session. After submission, show an acknowledgment and keep the response visible until the next prompt appears.
+
+### Keep all vocabulary visible while constraining choice selections
+
+Render the complete profile vocabulary in assigned page and position order. For a choice question, use `available_symbol_ids` to keep current choices at full emphasis and selectable; show other symbols dimmed and non-selectable. Keep the dimmed symbols and labels legible and convey their unavailable state to assistive technology. For sentence practice, all profile vocabulary remains selectable. Honor the profile's card size without changing symbol order.
+
+### Use Jinja with focused JavaScript
+
+Build the browser interface using the existing FastAPI and Jinja setup, with focused JavaScript for profile selection, settings updates, session state, vocabulary selection, speech, and API calls. This avoids a separate frontend build pipeline while keeping the interactive behavior in browser code. Keep template routes and JSON endpoints on the same FastAPI application.
+
+### Confirm backend contracts before UI integration
+
+The UI depends on the session start, response submission, and completion contracts. Confirm their request and response shapes through the backend API walkthrough before implementing the integration. The profile and vocabulary APIs are already available.
 
 ## Risks / Trade-offs
 
-- **Backend API details may change while the current change is implemented** → Confirm routes and request/response shapes after the backend walkthrough, then align the UI tasks before coding.
-- **Server-rendered templates may need browser-side code for interactive responses and speech** → Keep that code focused on the practice board and confirm the balance at the design checkpoint.
-- **AAC use varies by learner** → Review prompt mode, card size, vocabulary order, and keyboard/accessibility needs with the user before implementation.
+- **The board has less vertical space after adding a prompt panel and response controls** -> Scale the landscape board while keeping touch targets usable; allow board scrolling for vocabulary beyond the visible area.
+- **Dimmed symbols may be mistaken for unavailable content or become hard to read** -> Preserve label legibility, provide a non-color cue and accessible unavailable state, and block activation for unavailable choice symbols.
+- **Profile fields may not fit comfortably on one screen** -> Use a dedicated pre-session settings view that returns to the selected learner's pre-session screen.
+- **Speech support varies by browser and operating system** -> Keep the visual composition visible and retain manual Speak control even when automatic speech is unavailable.
+- **The completion API is still being walked through** -> Confirm its behavior before connecting the UI completion flow.
 
 ## Migration Plan
 
-No data migration is expected. Add interface routes and assets alongside the API, and retain the JSON API for direct use and documentation.
+No data migration is expected. Add page routes, Jinja templates, and static assets alongside the JSON API. Keep the API available for direct use and documentation.
 
 ## Open Questions
 
-- At the design checkpoint, agree on the learner journey, visual direction, and whether the existing Jinja setup is sufficient for the interaction model.
+None for the agreed first implementation. The browser walkthrough will identify integration details that depend on the completed session API contract.

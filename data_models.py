@@ -83,6 +83,13 @@ class PracticeSession(Base):
 
     communication_goal: Mapped[str] = mapped_column(String(20), nullable=False,)
     practice_format: Mapped[str] = mapped_column(String(8), nullable=False,)
+
+    # scenario: location:
+    #           questions: [
+    #           {question_id, location, question_format, communication_goal,
+    #                      question, question_symbol_ids, available_symbol_ids,
+    #                      expected_response}
+    #            ]
     scenario: Mapped[dict] = mapped_column(JSON, nullable=False,)
 
     # Session status ('active', 'completed')

@@ -78,10 +78,22 @@ The system SHALL calculate counts and rates from recorded response events and SH
 
 #### Scenario: Complete a session
 - **WHEN** the caregiver or learner completes a session
-- **THEN** the system calculates objective measures from its response events, persists them with the completed session, and clears transient events
+- **THEN** the system calculates objective measures from its response events, persists them with display-ready per-question results in the completed session summary, and clears raw transient events
+
+#### Scenario: Classify submitted answers by elapsed time
+- **WHEN** a submitted answer has a non-negative elapsed time from question presentation
+- **THEN** the system classifies it as independent under 10 seconds, verbally prompted from 10 to under 20 seconds, or modeled at 20 seconds or more; there is no 30-second cutoff
+
+#### Scenario: Complete with unanswered questions
+- **WHEN** the session is completed and a question has no submitted answer
+- **THEN** the question is not included in answered counts or answer details
+
+#### Scenario: Persist per-question display results
+- **WHEN** a submitted answer is included in the completed summary
+- **THEN** its question text, available symbols, selected symbols, correctness, and elapsed-time category are stored as derived display data separately from aggregate measures, without storing raw timestamps or prompt events
 
 ### Requirement: AI narrative summaries are grounded in calculated measures
-The system SHALL use AI only to write a caregiver-friendly narrative from the completed session context and application-calculated measures.
+The system SHALL use AI only to write a caregiver-friendly narrative from the completed session context, application-calculated measures, and derived per-question display results.
 
 #### Scenario: Narrative generation succeeds
 - **WHEN** AI summary generation succeeds

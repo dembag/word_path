@@ -9,7 +9,8 @@ The fixed scenario fixture only proves that a practice session can start; it doe
 - Generate five practice questions together when a session starts, using the requested communication goal and format, the learner's approved vocabulary, and an optional session location.
 - Let the caregiver choose a saved learner location; if none is requested, choose randomly from saved locations, and omit the location constraint when the learner has none.
 - Return the generated questions as the session content and stop using fixed scenarios as the active session source.
-- Keep per-question response events transient, calculate objective measures in the application, and ask AI to write a caregiver-friendly narrative from those measures and the session context.
+- Keep raw per-question response events transient, calculate objective measures in the application, and persist display-ready per-question results with those measures in the completed session summary.
+- Ask AI to write a caregiver-friendly narrative from the session context, calculated measures, and per-question results.
 - Return a recoverable error and do not create an active session when question generation fails validation or cannot be completed. Preserve the completed session and computed measures if narrative generation fails, and report that the narrative is unavailable.
 
 ## Capabilities

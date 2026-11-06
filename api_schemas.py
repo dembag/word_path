@@ -164,7 +164,9 @@ class StartPracticeSession(BaseModel):
 class SubmitAnswer(BaseModel):
     question_id: int
     answer_symbol_ids: list[int] = Field(min_length=1)
-    support_level: SupportLevel
+    question_presented_at: datetime
+    verbal_prompt_at: datetime | None = None
+    modeled_prompt_at: datetime | None = None
 
 
 class AnswerRecorded(BaseModel):
@@ -172,3 +174,16 @@ class AnswerRecorded(BaseModel):
     question_id: int
     response_order: int
     recorded: Literal[True]
+
+
+# ------ Session Summary Generation schema ------
+class SummaryInformation(BaseModel):
+    communication_goal: CommunicationGoal
+    practice_format: PracticeFormat
+    location: str | None = Field(max_length=20, default=None)
+    results: dict[str, Any]
+    question_results: list[dict[str, Any]]
+
+
+class GeneratedReview(BaseModel):
+    review: str = Field(min_length=1)

@@ -1,14 +1,21 @@
 """ Interactions with the database"""
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, desc, select
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from api_schemas import UserSymbolResponse
 
+load_dotenv(Path(__file__).resolve().with_name(".env"))
+
 DATABASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 os.makedirs(DATABASE_DIR, exist_ok=True)
 
-DATABASE_URL = f"sqlite:///{os.path.join(DATABASE_DIR, 'word_path.db')}"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    f"sqlite:///{os.path.join(DATABASE_DIR, 'word_path.db')}",
+)
 
 # Create database connection
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})

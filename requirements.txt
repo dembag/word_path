@@ -8,3 +8,5 @@ alembic
 pgvector
 openai
 python-dotenv
+requests
+Pillow
