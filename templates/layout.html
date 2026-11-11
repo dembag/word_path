@@ -10,7 +10,7 @@
             Home
         {% endif %}
     </title>
-    <link rel="stylesheet" href="/static/css/aac-practice.css">
+    <link rel="stylesheet" href="/static/css/aac-practice.css?v=landscape-sections-1">
 </head>
 <body class="{% block body_class %}{% endblock body_class %}">
     <header class="site-header">
@@ -18,5 +18,8 @@
     </header>
     {% block content %}
     {% endblock content %}
+    <div class="landscape-message" role="status" aria-live="polite">
+        <p>Rotate your device to landscape to use Word Path.</p>
+    </div>
 </body>
 </html>

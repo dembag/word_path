@@ -9,7 +9,7 @@ The project is a FastAPI application with Jinja2 installed, starter templates in
 **Goals:**
 
 - Give learners a direct browser path from profile selection through a complete practice session.
-- Preserve the prototype's landscape tablet layout, color-separated board sections, message strip, and stable vocabulary positions.
+- Preserve the prototype's landscape tablet layout, color-separated board sections, message strip, and stable vocabulary positions; keep the learner interface landscape-only.
 - Provide a profile splash page and full profile settings before a session starts.
 - Keep the implementation understandable and within the existing FastAPI, Jinja, HTML, CSS, and JavaScript stack.
 - Connect profile, vocabulary, and session interactions to existing API endpoints.
@@ -31,13 +31,19 @@ Profile selection and editing use the existing `/users`, `/users/{user_id}`, and
 
 ### Fill the browser viewport with the practice board
 
-Fill the browser viewport with the practice interface and remove the enclosing tablet-style frame. Keep the prompt and response strip tiles the same size as the small board tiles (84 by 105 CSS pixels), and size the question strip to its contents with 10px padding around the question tiles. Place the Listen symbol control to the right of the question symbols at the same height as the tiles. Keep the main vocabulary tiles at a 4:5 aspect ratio while their displayed size adapts to the board. Preserve the prototype's color-separated sections and assigned tile positions.
+Fill the browser viewport with the practice interface in landscape orientation and remove the enclosing tablet-style frame. In portrait orientation, hide the normal page content and show a rotate-to-landscape message. Keep the prompt and response strip tiles the same size as the small board tiles (84 by 105 CSS pixels), and size the question strip to its contents with 10px padding around the question tiles. Place the Listen symbol control to the right of the question symbols at the same height as the tiles. Keep the main vocabulary tiles at a 4:5 aspect ratio while their displayed size adapts to the board.
+
+### Arrange the Personal, Core, and General vocabulary sections
+
+Place Personal on the left in one column over a light blue background, Core directly beside it in three columns over a faded purple background, and General on the right over a faded beige background. General takes the remaining width. Keep the section names hidden visually but available to assistive technology. Keep Personal tiles medium when the profile selects small or medium cards; when large cards are selected, Personal tiles remain large. Core and General follow the profile card size. Map legacy `people` assignments and `personal` assignments to Personal, `core` to Core, and every other page assignment to General. Keep symbols in position order within each resulting section.
+
+Use the muted section colors `#dceefe` (Personal), `#e8e0f1` (Core), and `#efe6d8` (General). Size the Personal and Core columns to fit their required tile columns, then let General consume the remaining width. Let the board and each section scroll when the available landscape viewport cannot show all symbols at once.
 
 ### Place prompt, response, and vocabulary in separate areas
 
 During practice, show the current scenario in a prompt panel at the top, with prompt replay. Follow it with the prototype's persistent message strip, extended with Speak, Clear, and Submit controls. Keep the color-separated vocabulary board below. Honor the learner's text-only or symbols-and-text prompt setting.
 
-When a symbol is selected, add it to the message strip in selection order and speak its word. Speak plays the composed message; Clear removes the current composition; Submit speaks the composed response and submits it to the active session. In choice mode, flash the selected symbol's border green and play a happy ding for a correct answer; flash it red and play the normal selection click for an incorrect answer. Keep the response visible until the learner moves on, and allow retries.
+When a symbol is selected, add it to the message strip in selection order and speak its word. Speak plays the composed message; Submit speaks the composed response and submits it to the active session. Remove individual response symbols by selecting them. In choice mode, flash the selected symbol's border green and play a happy ding for a correct answer; flash it red and play the normal selection click for an incorrect answer. Keep the response visible until the learner moves on, and allow retries.
 
 ### Keep all vocabulary visible while constraining choice selections
 

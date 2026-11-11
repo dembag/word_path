@@ -12,7 +12,6 @@ if (practiceRoot && practiceQuestionsNode) {
   const responseItems = document.querySelector("#responseItems");
   const responseStatus = document.querySelector("#responseStatus");
   const speakResponseButton = document.querySelector("#speakResponseButton");
-  const clearResponseButton = document.querySelector("#clearResponseButton");
   const submitResponseButton = document.querySelector("#submitResponseButton");
   const nextQuestionButton = document.querySelector("#nextQuestionButton");
   const finishSessionButton = document.querySelector("#finishSessionButton");
@@ -133,7 +132,6 @@ if (practiceRoot && practiceQuestionsNode) {
 
     const hasResponse = selectedSymbols.length > 0;
     speakResponseButton.disabled = !hasResponse;
-    clearResponseButton.disabled = !hasResponse || answeredCorrectly;
     submitResponseButton.disabled = !hasResponse || submitting || answeredCorrectly;
   }
 
@@ -419,15 +417,6 @@ if (practiceRoot && practiceQuestionsNode) {
   }
   replayButton.addEventListener("click", () => speakText(promptText.textContent));
   speakResponseButton.addEventListener("click", () => speakText(selectedSymbols.map((symbol) => symbol.word).join(" ")));
-  clearResponseButton.addEventListener("click", () => {
-    if (answeredCorrectly) return;
-    selectedSymbols = [];
-    answeredIncorrectly = false;
-    responseStatus.textContent = "";
-    clearAnswerFeedback();
-    renderResponse();
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-  });
   submitResponseButton.addEventListener("click", submitResponse);
   nextQuestionButton.addEventListener("click", () => {
     if (activeIndex < questions.length - 1) beginQuestion(activeIndex + 1);

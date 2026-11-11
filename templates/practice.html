@@ -52,7 +52,6 @@
         <div class="response-controls">
             <div class="response-actions">
                 <button class="button button-secondary" id="speakResponseButton" type="button" disabled>Speak</button>
-                <button class="button button-secondary" id="clearResponseButton" type="button" disabled>Clear</button>
                 <button class="button button-primary" id="submitResponseButton" type="button" disabled>Submit</button>
             </div>
         </div>
@@ -84,5 +83,5 @@
     </section>
 </main>
 <script id="practiceQuestions" type="application/json">{{ practice_questions|tojson }}</script>
-<script src="/static/js/practice-prompt.js" defer></script>
+<script src="/static/js/practice-prompt.js?v=submit-fix-1" defer></script>
 {% endblock content %}

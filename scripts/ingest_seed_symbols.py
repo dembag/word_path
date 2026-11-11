@@ -58,6 +58,10 @@ WORD_CLASS_BY_CATEGORY = {
     "descriptor": "adjective",
 }
 
+# ARASAAC's best search for "stop" returns the bus-stop noun. Use the red
+# traffic stop sign pictogram for the AAC action instead.
+PICTOGRAM_ID_OVERRIDES = {"stop": 8289}
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
@@ -71,6 +75,10 @@ def slugify(value: str) -> str:
 
 
 def get_best_pictogram(word: str, http: requests.Session) -> dict | None:
+    override_id = PICTOGRAM_ID_OVERRIDES.get(word.casefold())
+    if override_id is not None:
+        return {"_id": override_id}
+
     url = f"{API_BASE}/pictograms/{LANGUAGE}/bestsearch/{quote(word, safe='')}"
     response = http.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
     response.raise_for_status()
@@ -145,6 +153,10 @@ def main() -> int:
                     if symbol is None:
                         symbol = dm.Symbol()
                         db.add(symbol)
+                        # SessionLocal disables autoflush, so make this new row
+                        # visible to the next seed lookup (some words appear in
+                        # more than one seed category).
+                        db.flush()
 
                     symbol.word = word
                     symbol.word_class = WORD_CLASS_BY_CATEGORY.get(category, "noun")

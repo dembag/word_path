@@ -196,22 +196,38 @@ def practice_page(
     ).all()
     vocabulary_by_id = {symbol.symbol_id: symbol for symbol in vocabulary_symbols}
 
-    board_pages = []
+    board_symbols = {page: [] for page in ("personal", "core", "general")}
     for user_symbol in vocabulary:
         symbol = vocabulary_by_id.get(user_symbol.symbol_id)
         if symbol is None:
             continue
+        if user_symbol.page in {"people", "personal"}:
+            page = "personal"
+        elif user_symbol.page == "core":
+            page = "core"
+        else:
+            page = "general"
         board_symbol = {
             "symbol_id": symbol.symbol_id,
             "word": symbol.word,
             "word_class": symbol.word_class,
-            "page": user_symbol.page,
+            "page": page,
             "position": user_symbol.position,
             "image_url": static_symbol_url(symbol.image_reference),
         }
-        if not board_pages or board_pages[-1]["page"] != user_symbol.page:
-            board_pages.append({"page": user_symbol.page, "symbols": []})
-        board_pages[-1]["symbols"].append(board_symbol)
+        board_symbols[page].append(board_symbol)
+
+    board_pages = [
+        {
+            "page": page,
+            "symbols": sorted(
+                symbols,
+                key=lambda item: (item["position"], item["symbol_id"]),
+            ),
+        }
+        for page, symbols in board_symbols.items()
+        if symbols
+    ]
 
     return templates.TemplateResponse(
         request=request,

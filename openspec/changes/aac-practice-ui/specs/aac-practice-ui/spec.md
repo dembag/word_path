@@ -89,7 +89,7 @@ The interface SHALL support a single-symbol choice response and an ordered multi
 - **THEN** the symbol is added to the response in selection order and its word is spoken aloud
 
 #### Scenario: Edit the response
-- **WHEN** the learner removes a selected symbol or clears the response
+- **WHEN** the learner removes a selected symbol from the response
 - **THEN** the response area updates without changing the vocabulary board
 
 #### Scenario: Speak and submit a response
@@ -161,8 +161,27 @@ The interface SHALL honor the learner's selected card size and keep every vocabu
 - **WHEN** vocabulary extends beyond the visible board area
 - **THEN** the learner can scroll to see the remaining symbols, while only symbols available for the current question can be selected
 
+### Requirement: Vocabulary board uses three landscape sections
+The learner interface SHALL use a landscape layout with Personal on the left, Core beside it, and General filling the remaining board area on the right. The section names SHALL remain available to assistive technology while their headings stay visually hidden. Personal SHALL use one tile column over a light blue background; Core SHALL use three tile columns over a faded purple background; General SHALL use the remaining width over a faded beige background. Words assigned to any page other than `personal` or `core` SHALL appear in General. Personal tiles SHALL use medium size when the profile selects small or medium cards and large size when the profile selects large cards.
+
+#### Scenario: Present the three vocabulary sections
+- **WHEN** a practice board contains Personal, Core, and General vocabulary
+- **THEN** Personal appears at the left in one column, Core appears beside it in three columns, and General fills the remaining area on the right
+
+#### Scenario: Use the Personal tile size override
+- **WHEN** the profile selects small or medium cards
+- **THEN** Personal tiles use medium size while Core and General follow the selected card size
+
+#### Scenario: Show General vocabulary
+- **WHEN** a vocabulary item is assigned to a page other than `personal` or `core`
+- **THEN** the practice board places it in General
+
+#### Scenario: Request landscape orientation
+- **WHEN** Word Path is opened in portrait orientation
+- **THEN** the interface hides its normal page content and asks the user to rotate the device to landscape
+
 ### Requirement: Practice interface fills the browser viewport
-The practice interface SHALL fill the browser viewport without an enclosing tablet-style frame. The prompt and response strips SHALL size their symbols to match the small main-board tiles and have enough height to show each complete tile. The question strip SHALL size to its contents with 10px padding around question symbols. Vocabulary tiles SHALL retain their 4:5 shape.
+The practice interface SHALL fill the browser viewport without an enclosing tablet-style frame in landscape orientation. The prompt and response strips SHALL size their symbols to match the small main-board tiles and have enough height to show each complete tile. The question strip SHALL size to its contents with 10px padding around question symbols. Vocabulary tiles SHALL retain their 4:5 shape.
 
 #### Scenario: Present a practice turn
 - **WHEN** a practice question is active

@@ -13,6 +13,9 @@
     --surface: #fff;
     --small-card-width: 84px;
     --small-card-height: 105px;
+    --personal-board: #dceefe;
+    --core-board: #e8e0f1;
+    --general-board: #efe6d8;
 }
 
 * {
@@ -591,6 +594,10 @@ select {
     color: #aebdce;
 }
 
+.landscape-message {
+    display: none;
+}
+
 .prompt-panel, .response-panel {
     min-width: 0;
     min-height: 0;
@@ -880,35 +887,43 @@ select {
 }
 
 .practice-board {
+    --board-gap: clamp(6px, .6vw, 10px);
+    --section-inset: clamp(7px, .75vw, 12px);
+    --tile-gap: clamp(7px, .85vw, 14px);
+    --personal-section-width: calc(var(--personal-card-min) + var(--section-inset) + var(--section-inset));
+    --core-section-width: calc(var(--card-min) + var(--card-min) + var(--card-min) + var(--tile-gap) + var(--tile-gap) + var(--section-inset) + var(--section-inset));
+    --general-section-min: calc(var(--card-min) + var(--section-inset) + var(--section-inset));
     min-height: 0;
+    min-width: 0;
     overflow: auto;
     display: grid;
-    grid-template-columns: 15fr 30fr 55fr;
+    grid-template-columns: var(--personal-section-width) var(--core-section-width) minmax(var(--general-section-min), 1fr);
     align-content: stretch;
-    gap: clamp(6px, .6vw, 10px);
+    gap: var(--board-gap);
 }
 
 .vocabulary-page {
     min-width: 0;
     min-height: 0;
-    padding: clamp(7px, .75vw, 12px);
-    overflow: auto;
-    background: #00cba3;
+    padding: var(--section-inset);
+    overflow-x: hidden;
+    overflow-y: auto;
+    background: var(--general-board);
 }
 
-.vocabulary-page[data-page="people"] {
+.vocabulary-page[data-page="people"],
+.vocabulary-page[data-page="personal"] {
     grid-column: 1;
-    background: #ed173b;
+    background: var(--personal-board);
 }
 
 .vocabulary-page[data-page="core"] {
     grid-column: 2;
-    background: #e8f43a;
+    background: var(--core-board);
 }
 
-.vocabulary-page[data-page="personal"] {
+.vocabulary-page[data-page="general"] {
     grid-column: 3;
-    background: #00cba3;
 }
 
 .vocabulary-page[data-page="all"] {
@@ -934,15 +949,12 @@ select {
     gap: clamp(7px, .85vw, 14px);
 }
 
-.vocabulary-page[data-page="people"] .vocabulary-grid {
+.vocabulary-page[data-page="people"] .vocabulary-grid,
+.vocabulary-page[data-page="personal"] .vocabulary-grid {
     grid-template-columns: minmax(0, 1fr);
 }
 
 .vocabulary-page[data-page="core"] .vocabulary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.vocabulary-page[data-page="personal"] .vocabulary-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -995,6 +1007,7 @@ select {
 .practice-shell[data-card-size="small"] {
     --card-min: var(--small-card-width);
     --card-height: var(--small-card-height);
+    --personal-card-min: 112px;
 }
 
 .practice-shell[data-card-size="small"] .vocabulary-card {
@@ -1008,6 +1021,7 @@ select {
 .practice-shell[data-card-size="medium"] {
     --card-min: 112px;
     --card-height: 122px;
+    --personal-card-min: 112px;
 }
 
 .practice-shell[data-card-size="medium"] .vocabulary-card {
@@ -1021,6 +1035,7 @@ select {
 .practice-shell[data-card-size="large"] {
     --card-min: 145px;
     --card-height: 158px;
+    --personal-card-min: 145px;
 }
 
 .practice-shell[data-card-size="large"] .vocabulary-card {
@@ -1049,10 +1064,6 @@ select {
 }
 
 @media (max-width: 760px) {
-    .practice-board {
-        grid-template-columns: 15fr 30fr 55fr;
-    }
-
     .pre-session-grid {
         grid-template-columns: 1fr;
     }
@@ -1075,6 +1086,40 @@ select {
 
     .completion-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (orientation: portrait) {
+    body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background: #101827;
+    }
+
+    body > :not(.landscape-message) {
+        display: none !important;
+    }
+
+    body > .landscape-message {
+        min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        color: #f4f7fb;
+        text-align: center;
+    }
+
+    .landscape-message p {
+        max-width: 24rem;
+        margin: 0;
+        font-size: clamp(1.35rem, 5vw, 2rem);
+        font-weight: 800;
+        line-height: 1.35;
     }
 }
 
