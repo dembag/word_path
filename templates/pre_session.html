@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% block content %}
+<main class="page-shell pre-session-page">
+    <a class="back-link" href="/">← All profiles</a>
+
+    <section class="welcome-panel">
+        <p class="eyebrow">Pre-session setup</p>
+        <h1>Ready to practise, {{ user.name }}?</h1>
+        <p>Choose a communication goal. Your profile settings are used for this session.</p>
+    </section>
+
+    <div class="pre-session-grid">
+        <section class="panel profile-summary" aria-labelledby="profile-summary-title">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Learner profile</p>
+                    <h2 id="profile-summary-title">{{ user.name }}</h2>
+                </div>
+                <a class="button button-secondary" href="/profiles/{{ user.user_id }}/settings" aria-label="Settings for {{ user.name }}">⚙ Settings</a>
+            </div>
+            <dl class="profile-details">
+                <div><dt>Age band</dt><dd>{{ user.age_band }}</dd></div>
+                <div><dt>Practice format</dt><dd>{{ user.starting_format|title }}</dd></div>
+                <div><dt>Prompt display</dt><dd>{{ user.prompt_display|replace('_', ' ')|title }}</dd></div>
+                <div><dt>Card size</dt><dd>{{ user.card_size|title }}</dd></div>
+            </dl>
+        </section>
+
+        <section class="panel goal-panel" aria-labelledby="goal-title">
+            <p class="eyebrow">Choose today's focus</p>
+            <h2 id="goal-title">Communication goal</h2>
+            {% if user.communication_goals %}
+            <form id="startSessionForm" data-user-id="{{ user.user_id }}" data-practice-format="{{ user.starting_format }}">
+                <fieldset class="goal-options">
+                    <legend class="visually-hidden">Choose a communication goal</legend>
+                    {% for goal in user.communication_goals %}
+                    <label class="goal-option">
+                        <input type="radio" name="communication_goal" value="{{ goal }}" {% if loop.first %}checked{% endif %}>
+                        <span>{{ goal_labels.get(goal, goal|replace('_', ' ')|title) }}</span>
+                    </label>
+                    {% endfor %}
+                </fieldset>
+                {% if user.locations %}
+                <label class="field-label" for="sessionLocation">Practice location <span>(optional)</span></label>
+                <select id="sessionLocation" name="location">
+                    <option value="">Choose a location</option>
+                    {% for location in user.locations %}
+                    <option value="{{ location }}">{{ location }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                <p class="format-note">Session format: <strong>{{ user.starting_format|title }}</strong></p>
+                <p class="form-status" id="sessionStartStatus" role="status" aria-live="polite"></p>
+                <button class="button button-primary start-button" id="startPracticeButton" type="submit">Start practice</button>
+            </form>
+            {% else %}
+            <p class="empty-note">No communication goals are enabled for this profile yet.</p>
+            {% endif %}
+        </section>
+    </div>
+</main>
+<script src="/static/js/start-session.js" defer></script>
+{% endblock content %}

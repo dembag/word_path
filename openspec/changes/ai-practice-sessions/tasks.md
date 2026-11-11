@@ -27,6 +27,6 @@
 
 ## 4. Caregiver narrative and end-to-end flow
 
-- [ ] 4.1 Generate a caregiver-friendly narrative from stored context, app-calculated measures, and per-question results; store the narrative separately from structured results and verify the AI is not asked to calculate counts or rates.
-- [ ] 4.2 Preserve completed status and measures when narrative generation fails, and expose narrative unavailability in the API response; verify this path through a controlled provider failure.
-- [ ] 4.3 Walk through session start, all five responses, completion, and summary retrieval using the API docs or simple HTTP requests; verify successful generation, validation failure, and narrative failure paths.
+- [x] 4.1 Generate a caregiver-friendly narrative from stored context, app-calculated measures, and per-question results; store the narrative separately from structured results and verify the AI is not asked to calculate counts or rates.
+- [x] 4.2 Preserve completed status and measures when narrative generation fails, and expose narrative unavailability in the API response; verify this path through a controlled provider failure.
+- [x] 4.3 Walk through session start, all five responses, completion, and summary retrieval using the API docs or simple HTTP requests; verify successful generation, validation failure, and narrative failure paths.

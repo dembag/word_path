@@ -205,3 +205,13 @@ Table user_symbol_stats {
   last_practised_at timestamp
 }
 
+## Vocabulary ideas
+
+Sorted by 'Page'
+Personal:
+I/me, you, Mum, Dad, Brother, Sister, specific friends or people in the
+user's life (personalised with photos where appropriate).
+
+Core:
+Words and phrases like please, thank you, yes, no, stop, finished, hello
+goodbye, what, where, eat, drink

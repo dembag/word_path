@@ -1,0 +1,88 @@
+{% extends "layout.html" %}
+{% block body_class %}practice-page{% endblock body_class %}
+{% block content %}
+<main class="practice-shell" id="practiceApp"
+      data-session-id="{{ practice_session.session_id }}"
+      data-prompt-display="{{ user.prompt_display }}"
+      data-practice-format="{{ practice_session.practice_format }}"
+      data-card-size="{{ user.card_size }}">
+    <div class="practice-topline">
+        <span class="practice-brand">Word Path practice</span>
+        <span class="practice-profile">{{ user.name }}</span>
+    </div>
+
+    <section class="prompt-panel" aria-labelledby="promptText">
+        <div class="prompt-heading">
+            <h1 id="promptText" aria-live="polite">{{ practice_questions[0].question }}</h1>
+            <div class="prompt-actions">
+            <button class="button button-secondary replay-button" id="replayPromptButton" type="button" aria-label="Hear the question again">
+                <img class="replay-symbol" src="/static/symbols/arasaac_2381_listen_symbol.png" alt="">
+            </button>
+            <div class="prompt-navigation">
+                <button class="button button-secondary" id="nextQuestionButton" type="button">
+                    <svg class="navigation-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M12 5l7 7-7 7"/></svg>
+                    <span>Next</span>
+                </button>
+                <button class="button button-secondary" id="finishSessionButton" type="button" hidden>
+                    <svg class="navigation-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4m1 1h12l-3 4 3 4H6"/></svg>
+                    <span>Finish</span>
+                </button>
+            </div>
+            </div>
+        </div>
+        {% if user.prompt_display == "symbols_and_text" %}
+        <div class="prompt-symbols" id="promptSymbols" aria-label="Symbols in the question">
+            {% for symbol in practice_questions[0].question_symbols %}
+            <figure class="prompt-symbol">
+                <img src="{{ symbol.image_url }}" alt="">
+            </figure>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="prompt-symbols" id="promptSymbols" hidden></div>
+        {% endif %}
+    </section>
+
+    <section class="response-panel" aria-label="Your response">
+        <div class="response-message">
+            <p class="response-placeholder" id="responsePlaceholder">Choose a symbol to build your response</p>
+            <div class="response-items" id="responseItems" aria-live="polite"></div>
+            <p class="response-status" id="responseStatus" role="status" aria-live="polite"></p>
+        </div>
+        <div class="response-controls">
+            <div class="response-actions">
+                <button class="button button-secondary" id="speakResponseButton" type="button" disabled>Speak</button>
+                <button class="button button-secondary" id="clearResponseButton" type="button" disabled>Clear</button>
+                <button class="button button-primary" id="submitResponseButton" type="button" disabled>Submit</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="practice-board" id="practiceBoard" aria-label="Vocabulary board">
+        {% if board_pages %}
+            {% for board_page in board_pages %}
+            <section class="vocabulary-page" data-page="{{ board_page.page }}" aria-labelledby="page-{{ loop.index }}">
+                <h2 class="vocabulary-page-title" id="page-{{ loop.index }}">{{ board_page.page|replace("_", " ")|title }}</h2>
+                <div class="vocabulary-grid">
+                    {% for symbol in board_page.symbols %}
+                    <button class="vocabulary-card" type="button"
+                            data-symbol-id="{{ symbol.symbol_id }}"
+                            data-word="{{ symbol.word }}"
+                            data-page="{{ symbol.page }}"
+                            data-position="{{ symbol.position }}"
+                            aria-label="{{ symbol.word }}"
+                            aria-disabled="false">
+                        <img src="{{ symbol.image_url }}" alt="" loading="lazy">
+                    </button>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        {% else %}
+        <p class="vocabulary-empty">This profile does not have any vocabulary yet.</p>
+        {% endif %}
+    </section>
+</main>
+<script id="practiceQuestions" type="application/json">{{ practice_questions|tojson }}</script>
+<script src="/static/js/practice-prompt.js" defer></script>
+{% endblock content %}

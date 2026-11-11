@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
         {% if title %}
             {{ title }}
@@ -9,8 +10,12 @@
             Home
         {% endif %}
     </title>
+    <link rel="stylesheet" href="/static/css/aac-practice.css">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock body_class %}">
+    <header class="site-header">
+        <a class="brand" href="/" aria-label="Word Path home">Word Path</a>
+    </header>
     {% block content %}
     {% endblock content %}
 </body>

@@ -96,6 +96,60 @@ The interface SHALL support a single-symbol choice response and an ordered multi
 - **WHEN** the learner submits a composed response
 - **THEN** the interface speaks the composed words and submits the response for the current turn
 
+### Requirement: Choice questions provide timed cues and answer feedback
+For choice sessions, the interface SHALL start the cue schedule when a question first appears, provide immediate visual and sound feedback for each submitted answer, and allow the learner to retry.
+
+#### Scenario: Verbal cue time is reached
+- **WHEN** 10 seconds have elapsed since the current question first appeared and it remains on screen
+- **THEN** the interface speaks the correct answer
+
+#### Scenario: Visual cue time is reached
+- **WHEN** 20 seconds have elapsed since the current question first appeared and it remains on screen
+- **THEN** the interface visually highlights the correct answer
+
+#### Scenario: Correct choice is submitted
+- **WHEN** the learner submits the correct choice
+- **THEN** the selected symbol's border flashes green and the interface plays a happy ding
+
+#### Scenario: Incorrect choice is submitted
+- **WHEN** the learner submits an incorrect choice
+- **THEN** the selected symbol's border flashes red, the interface plays the normal selection click, and the learner may retry or continue
+
+#### Scenario: Learner retries a choice question
+- **WHEN** the learner submits another answer for the same question
+- **THEN** the cue schedule continues from the question's original display time without restarting
+
+#### Scenario: Learner leaves a choice question
+- **WHEN** the learner advances to another question or finishes the session
+- **THEN** any remaining cues for the previous question stop
+
+#### Scenario: Score a choice question with retries
+- **WHEN** the session results are calculated
+- **THEN** accuracy and independence use the first submitted answer for that question, and later submissions do not change those scores
+
+### Requirement: Learner can navigate choice questions at any time
+The interface SHALL keep the **Next** action available from the moment a choice question appears, including when the learner has not answered or has submitted an incorrect answer. The final question SHALL provide **Finish** from the moment it appears. Navigation controls SHALL show a matching application control symbol and text label, independently of the learner's selectable vocabulary.
+
+#### Scenario: Continue without submitting an answer
+- **WHEN** the learner selects **Next** without submitting an answer
+- **THEN** the interface advances and the question is recorded as unanswered
+
+#### Scenario: Continue after an incorrect answer
+- **WHEN** the learner selects **Next** after an incorrect submission
+- **THEN** the interface advances while the first submitted answer remains the scored answer
+
+#### Scenario: Finish the final question
+- **WHEN** the learner selects **Finish** on the final question
+- **THEN** the interface completes the session and displays the session summary, including unanswered questions
+
+#### Scenario: Show navigation controls
+- **WHEN** **Next** or **Finish** is displayed
+- **THEN** the control shows its matching symbol alongside its text label
+
+#### Scenario: Highlight forward navigation after a submitted answer
+- **WHEN** a response is saved for the current question
+- **THEN** **Next** is highlighted light green, or **Finish** is highlighted light green when the current question is the final one
+
 ### Requirement: Learner can adjust vocabulary board density
 The interface SHALL honor the learner's selected card size and keep every vocabulary symbol visible or reachable by scrolling without changing its assigned order. Selection availability SHALL follow the active practice format and question.
 
@@ -107,19 +161,31 @@ The interface SHALL honor the learner's selected card size and keep every vocabu
 - **WHEN** vocabulary extends beyond the visible board area
 - **THEN** the learner can scroll to see the remaining symbols, while only symbols available for the current question can be selected
 
-### Requirement: Practice interface follows the landscape tablet layout
-The interface SHALL use the prototype's landscape tablet layout as its primary practice presentation, keeping the prompt, response strip, and color-separated vocabulary board spatially distinct.
+### Requirement: Practice interface fills the browser viewport
+The practice interface SHALL fill the browser viewport without an enclosing tablet-style frame. The prompt and response strips SHALL size their symbols to match the small main-board tiles and have enough height to show each complete tile. The question strip SHALL size to its contents with 10px padding around question symbols. Vocabulary tiles SHALL retain their 4:5 shape.
 
 #### Scenario: Present a practice turn
 - **WHEN** a practice question is active
 - **THEN** the prompt appears above the response strip and the vocabulary board remains below them
+
+#### Scenario: Use the full browser viewport
+- **WHEN** the practice interface is displayed at different browser viewport sizes or device emulations
+- **THEN** the interface fills the viewport without an outer tablet frame, the prompt, response, and board strips keep the same relative heights, and vocabulary tiles keep their 4:5 shape
+
+#### Scenario: Fit question symbols in the prompt strip
+- **WHEN** the prompt includes supporting symbols
+- **THEN** the symbol tiles match the small main-board tile size, preserve their complete images with 10px padding around them, and remain horizontally reachable when they exceed the strip width; the Listen symbol control appears at their right at the same height
+
+#### Scenario: Fit response symbols in the response strip
+- **WHEN** the learner composes a response
+- **THEN** response tiles match the small main-board tile size, preserve their complete images, and the response strip is tall enough to contain them
 
 ### Requirement: Interface acknowledges submitted responses
 The interface SHALL acknowledge a submitted response and keep it visible until the next prompt is presented.
 
 #### Scenario: Response submitted
 - **WHEN** the learner submits a response
-- **THEN** the interface shows a brief acknowledgment and keeps the response visible until the next prompt
+- **THEN** the interface shows the applicable answer feedback and keeps the response visible until the next prompt
 
 #### Scenario: Next prompt appears
 - **WHEN** the next practice prompt is presented

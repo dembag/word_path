@@ -153,6 +153,17 @@ class PracticeSessionResponse(PracticeSessionBase):
     completed_at: datetime | None
 
 
+class PracticeSessionQuestion(LearnerQuestion):
+    expected_response: list[int] = Field(min_length=1)
+
+
+class PracticeSessionStartResponse(PracticeSessionResponse):
+    questions: list[PracticeSessionQuestion] = Field(
+        min_length=SESSION_QUESTION_COUNT,
+        max_length=SESSION_QUESTION_COUNT,
+    )
+
+
 class StartPracticeSession(BaseModel):
     user_id: int
     communication_goal: CommunicationGoal

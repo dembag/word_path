@@ -2,21 +2,23 @@ import random
 from datetime import datetime, UTC
 
 from fastapi import Depends, FastAPI, Request, HTTPException, status
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Annotated
 from sqlalchemy import delete, select, desc
 from sqlalchemy.orm import Session
 
-from data_manager import Base, engine, get_db, SessionLocal
-from dummy_data import SCENARIOS, SYMBOL_CATALOG
+from data_manager import Base, engine, get_db
 import data_models as dm
 
 from api_schemas import (
     AnswerRecorded,
     GeneratedQuestionBatch,
     PracticeSessionResponse,
+    PracticeSessionStartResponse,
     StartPracticeSession,
     SubmitAnswer,
     SummaryInformation,
@@ -35,20 +37,194 @@ import ai_service
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    with SessionLocal() as db:
-        for symbol_data in SYMBOL_CATALOG:
-            if db.get(dm.Symbol, symbol_data["symbol_id"]) is None:
-                db.add(dm.Symbol(**symbol_data))
-        db.commit()
     yield
 
 app = FastAPI(lifespan=lifespan)
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+
+
+def static_symbol_url(image_reference: str) -> str:
+    """Build a static image URL that changes when the image file is updated."""
+    normalized = image_reference.replace("\\", "/").lstrip("/")
+    if normalized.startswith("static/"):
+        normalized = normalized[len("static/"):]
+    image_path = BASE_DIR / "static" / normalized
+    version = image_path.stat().st_mtime_ns if image_path.is_file() else 0
+    return f"/static/{normalized}?v={version}"
 
 
 session_answers: dict[int, list[dict]] = {}
+
+
+# ------ Browser interface ------
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def profile_splash(request: Request, db: Annotated[Session, Depends(get_db)]):
+    """Shows the available learner profiles."""
+    users = db.scalars(select(dm.User).order_by(dm.User.name)).all()
+    return templates.TemplateResponse(
+        request=request,
+        name="home.html",
+        context={"title": "Choose a profile", "users": users},
+    )
+
+
+@app.get("/profiles/{user_id}", response_class=HTMLResponse, include_in_schema=False)
+def profile_pre_session(
+    user_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Shows the selected learner's profile and practice setup."""
+    user = db.get(dm.User, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    goal_labels = {
+        "requesting": "Requesting",
+        "sharing_information": "Sharing information",
+        "social_interaction": "Social interaction",
+        "communication_repair": "Communication repair",
+    }
+    return templates.TemplateResponse(
+        request=request,
+        name="pre_session.html",
+        context={
+            "title": f"{user.name}'s practice setup",
+            "user": user,
+            "goal_labels": goal_labels,
+        },
+    )
+
+
+@app.get(
+    "/profiles/{user_id}/settings",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+def profile_settings_page(
+    user_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Shows editable profile settings before practice."""
+    user = db.get(dm.User, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    return templates.TemplateResponse(
+        request=request,
+        name="profile_settings.html",
+        context={
+            "title": f"Settings for {user.name}",
+            "user": user,
+            "age_bands": ["0-5", "6-9", "10-13", "14-17", "18+"],
+            "formats": ["choice", "sentence"],
+            "prompt_displays": ["text_only", "symbols_and_text"],
+            "communication_goals": [
+                ("requesting", "Requesting"),
+                ("sharing_information", "Sharing information"),
+                ("social_interaction", "Social interaction"),
+                ("communication_repair", "Communication repair"),
+            ],
+            "card_sizes": ["small", "medium", "large"],
+        },
+    )
+
+
+@app.get("/practice/{session_id}", response_class=HTMLResponse, include_in_schema=False)
+def practice_page(
+    session_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Renders a practice session prompt for the selected learner."""
+    practice_session = db.get(dm.PracticeSession, session_id)
+    if practice_session is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Practice session not found",
+        )
+
+    user = db.get(dm.User, practice_session.user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Learner profile not found",
+        )
+
+    questions = practice_session.scenario.get("questions", [])
+    symbol_ids = {
+        symbol_id
+        for question in questions
+        for symbol_id in question.get("question_symbol_ids", [])
+    }
+    symbols = db.scalars(
+        select(dm.Symbol).where(dm.Symbol.symbol_id.in_(symbol_ids))
+    ).all()
+    symbols_by_id = {symbol.symbol_id: symbol for symbol in symbols}
+
+    ui_questions = []
+    for question in questions:
+        ui_question = dict(question)
+        ui_question["question_symbols"] = []
+        for symbol_id in question.get("question_symbol_ids", []):
+            symbol = symbols_by_id.get(symbol_id)
+            if symbol is None:
+                continue
+            ui_question["question_symbols"].append(
+                {
+                    "symbol_id": symbol.symbol_id,
+                    "word": symbol.word,
+                    "image_url": static_symbol_url(symbol.image_reference),
+                }
+            )
+        ui_questions.append(ui_question)
+
+    vocabulary = data_manager.get_user_vocabulary(db, user.user_id)
+    vocabulary_ids = [symbol.symbol_id for symbol in vocabulary]
+    vocabulary_symbols = db.scalars(
+        select(dm.Symbol).where(dm.Symbol.symbol_id.in_(vocabulary_ids))
+    ).all()
+    vocabulary_by_id = {symbol.symbol_id: symbol for symbol in vocabulary_symbols}
+
+    board_pages = []
+    for user_symbol in vocabulary:
+        symbol = vocabulary_by_id.get(user_symbol.symbol_id)
+        if symbol is None:
+            continue
+        board_symbol = {
+            "symbol_id": symbol.symbol_id,
+            "word": symbol.word,
+            "word_class": symbol.word_class,
+            "page": user_symbol.page,
+            "position": user_symbol.position,
+            "image_url": static_symbol_url(symbol.image_reference),
+        }
+        if not board_pages or board_pages[-1]["page"] != user_symbol.page:
+            board_pages.append({"page": user_symbol.page, "symbols": []})
+        board_pages[-1]["symbols"].append(board_symbol)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="practice.html",
+        context={
+            "title": f"{user.name}'s practice session",
+            "user": user,
+            "practice_session": practice_session,
+            "practice_questions": ui_questions,
+            "board_pages": board_pages,
+            "total_questions": len(ui_questions),
+        },
+    )
 
 
 # ------ Users ------
@@ -334,7 +510,7 @@ def user_vocabulary():
 
 
 # ------ Practice sessions ------
-@app.post("/sessions", response_model=PracticeSessionResponse)
+@app.post("/sessions", response_model=PracticeSessionStartResponse)
 def start_session(
     start_practice_session: StartPracticeSession,
     db: Annotated[Session, Depends(get_db)],
@@ -440,11 +616,7 @@ def start_session(
         "session_status": practice_session.session_status,
         "summary": practice_session.summary,
         "questions": [
-            {
-                key: value
-                for key, value in question.items()
-                if key != "expected_response"
-            }
+            question
             for question in practice_session.scenario.get("questions", [])
         ],
         "started_at": practice_session.started_at,
@@ -531,8 +703,6 @@ def user_attempt(
     }
     answers_for_session.append(event)
 
-    print(answers_for_session)
-
     return {
         "session_id": session_id,
         "question_id": answer.question_id,
@@ -565,9 +735,9 @@ def end_session(session_id: int, db: Annotated[Session, Depends(get_db)]):
         )
 
     session_questions = practice_session.scenario["questions"]
-    events_by_question = {
-        event["question_id"]: event for event in session_answers.get(session_id, [])
-    }
+    attempts_by_question: dict[int, list[dict]] = {}
+    for event in session_answers.get(session_id, []):
+        attempts_by_question.setdefault(event["question_id"], []).append(event)
 
     correct_count = 0
     answered_count = 0
@@ -577,9 +747,12 @@ def end_session(session_id: int, db: Annotated[Session, Depends(get_db)]):
     summary_data = []
 
     for question in session_questions:
-        event = events_by_question.get(question["question_id"])
-        if event is None:
+        attempts = attempts_by_question.get(question["question_id"], [])
+        if not attempts:
             continue
+        # Score the first submitted response. Keep later attempts in the saved
+        # question details so retries remain available in the session summary.
+        event = attempts[0]
 
         elapsed_seconds = (event["answered_at"] - event["presented_at"]).total_seconds()
         if elapsed_seconds < 0:
@@ -617,6 +790,20 @@ def end_session(session_id: int, db: Annotated[Session, Depends(get_db)]):
             if symbol is not None:
                 expected_response_words.append(symbol.word)
 
+        response_attempts = []
+        for attempt in attempts:
+            attempt_words = []
+            for symbol_id in attempt["answer_symbol_ids"]:
+                symbol = db.get(dm.Symbol, symbol_id)
+                if symbol is not None:
+                    attempt_words.append(symbol.word)
+            response_attempts.append(
+                {
+                    "response_ids": attempt["answer_symbol_ids"],
+                    "response_words": attempt_words,
+                }
+            )
+
         summary_data.append(
             {
                 "question_id": question["question_id"],
@@ -629,6 +816,8 @@ def end_session(session_id: int, db: Annotated[Session, Depends(get_db)]):
                 "response_words": answer_words,
                 "correct": event["answer_symbol_ids"] == question["expected_response"],
                 "independence": independence,
+                "attempt_count": len(attempts),
+                "response_attempts": response_attempts,
             }
         )
 
@@ -650,6 +839,14 @@ def end_session(session_id: int, db: Annotated[Session, Depends(get_db)]):
             "modeled": modeled_percent,
         },
         "question_results": summary_data,
+        "unanswered_questions": [
+            {
+                "question_id": question["question_id"],
+                "question": question["question"],
+            }
+            for question in session_questions
+            if question["question_id"] not in attempts_by_question
+        ],
     }
 
     # Update the database
@@ -659,23 +856,40 @@ def end_session(session_id: int, db: Annotated[Session, Depends(get_db)]):
     db.commit()
     db.refresh(practice_session)
 
+    session_answers.pop(session_id, None)
+
     # Generate the review
+    review = None
+    review_status = "unavailable"
+
     summary_information = SummaryInformation(
         communication_goal=practice_session.communication_goal,
         practice_format=practice_session.practice_format,
-        location=practice_session.scenario["location"],
+        location=practice_session.scenario.get("location"),
         results=practice_session.summary["results"],
-        question_results=summary_data,
+        question_results=practice_session.summary["question_results"],
     )
-    generated_review = ai_service.generate_review(summary_information)
+
+    try:
+        generated_review = ai_service.generate_review(summary_information)
+    except (
+        ai_service.LLMConfigurationError,
+        ai_service.LLMProviderError,
+        ValueError,
+    ):
+        pass
+    else:
+        review = generated_review.review
+        review_status = "available"
+
     practice_session.summary = {
         **practice_session.summary,
-        "review": generated_review.review,
+        "review": review,
+        "review_status": review_status,
     }
     db.commit()
     db.refresh(practice_session)
 
-    session_answers.pop(session_id, None)
 
     return {
         "session_id": practice_session.session_id,

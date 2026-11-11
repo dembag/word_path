@@ -1,8 +1,30 @@
 {% extends "layout.html" %}
 {% block content %}
+<main class="page-shell profile-picker">
+    <section class="welcome-panel">
+        <p class="eyebrow">AAC practice</p>
+        <h1>Who is practising today?</h1>
+        <p>Choose a learner profile to get started.</p>
+    </section>
 
-    {% for user in users %}
-        <p>{{ user.name }}</p>
-    {% endfor %}
-
+    {% if users %}
+    <section class="profile-grid" aria-label="Learner profiles">
+        {% for user in users %}
+        <a class="profile-card" href="/profiles/{{ user.user_id }}">
+            <span class="profile-avatar" aria-hidden="true">{{ user.name[0]|upper }}</span>
+            <span class="profile-card-copy">
+                <strong>{{ user.name }}</strong>
+                <span>{{ user.age_band }} years</span>
+            </span>
+            <span class="profile-arrow" aria-hidden="true">→</span>
+        </a>
+        {% endfor %}
+    </section>
+    {% else %}
+    <section class="empty-state">
+        <h2>No learner profiles yet</h2>
+        <p>Create a profile through the API before starting AAC practice.</p>
+    </section>
+    {% endif %}
+</main>
 {% endblock content %}

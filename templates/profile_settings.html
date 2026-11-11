@@ -1,0 +1,83 @@
+{% extends "layout.html" %}
+{% block content %}
+<main class="page-shell settings-page">
+    <a class="back-link" href="/profiles/{{ user.user_id }}">← Back to {{ user.name }}'s setup</a>
+
+    <section class="welcome-panel">
+        <p class="eyebrow">Profile settings</p>
+        <h1>{{ user.name }}</h1>
+        <p>These settings shape the practice session and vocabulary board.</p>
+    </section>
+
+    <form class="panel settings-form" id="profileSettingsForm" data-user-id="{{ user.user_id }}">
+        <div class="form-grid">
+            <label class="form-field" for="profileName">
+                <span>Name</span>
+                <input id="profileName" name="name" type="text" maxlength="50" required value="{{ user.name }}">
+            </label>
+
+            <label class="form-field" for="ageBand">
+                <span>Age band</span>
+                <select id="ageBand" name="age_band">
+                    {% for band in age_bands %}
+                    <option value="{{ band }}" {% if user.age_band == band %}selected{% endif %}>{{ band }} years</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <fieldset class="form-group">
+                <legend>Prompt display</legend>
+                {% for display in prompt_displays %}
+                <label class="choice-field">
+                    <input type="radio" name="prompt_display" value="{{ display }}" {% if user.prompt_display == display %}checked{% endif %}>
+                    <span>{{ display|replace('_', ' ')|title }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+
+            <fieldset class="form-group">
+                <legend>Starting practice format</legend>
+                {% for format in formats %}
+                <label class="choice-field">
+                    <input type="radio" name="starting_format" value="{{ format }}" {% if user.starting_format == format %}checked{% endif %}>
+                    <span>{{ format|title }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+
+            <fieldset class="form-group form-group--wide">
+                <legend>Communication goals</legend>
+                <div class="checkbox-grid">
+                    {% for goal, label in communication_goals %}
+                    <label class="choice-field">
+                        <input type="checkbox" name="communication_goals" value="{{ goal }}" {% if goal in user.communication_goals %}checked{% endif %}>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <label class="form-field form-field--wide" for="profileLocations">
+                <span>Practice locations <small>One per line; leave blank if no location is needed.</small></span>
+                <textarea id="profileLocations" name="locations" rows="4">{{ user.locations|join('\n') }}</textarea>
+            </label>
+
+            <label class="form-field" for="cardSize">
+                <span>Vocabulary card size</span>
+                <select id="cardSize" name="card_size">
+                    {% for size in card_sizes %}
+                    <option value="{{ size }}" {% if user.card_size == size %}selected{% endif %}>{{ size|title }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </div>
+
+        <p class="form-status" id="settingsStatus" role="status" aria-live="polite"></p>
+        <div class="settings-actions">
+            <a class="button button-secondary" href="/profiles/{{ user.user_id }}">Cancel</a>
+            <button class="button button-primary" id="saveProfileButton" type="submit">Save settings</button>
+        </div>
+    </form>
+</main>
+<script src="/static/js/profile-settings.js" defer></script>
+{% endblock content %}

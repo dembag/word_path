@@ -9,6 +9,7 @@ The project currently focuses on a backend API, while learners need a browser in
 - Add a profile splash page that lists existing learner profiles and opens a pre-session screen for the selected learner.
 - Add full profile settings on the pre-session screen, with no access to settings while a practice session is active.
 - Add a browser-based AAC practice interface for viewing a scenario and composing a reply with the learner's vocabulary.
+- Add choice-mode timed cues, immediate sound and visual correctness feedback, retry support, and question navigation that remains available from the start of each question.
 - Preserve the prototype's landscape tablet layout, color-separated vocabulary sections, and message strip, adding a prompt area and session controls.
 - Connect profile, vocabulary, and session interactions to the existing FastAPI endpoints using Jinja templates and focused JavaScript.
 
