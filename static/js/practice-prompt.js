@@ -200,6 +200,25 @@ if (practiceRoot && practiceQuestionsNode) {
         figure.append(image);
         promptSymbols.append(figure);
       }
+      const questionMark = document.createElement("span");
+      questionMark.className = "prompt-question-mark";
+      questionMark.textContent = "?";
+      questionMark.setAttribute("aria-label", "Question mark");
+      promptSymbols.append(questionMark);
+      const availableSymbolsSpacer = document.createElement("span");
+      availableSymbolsSpacer.className = "prompt-available-symbols-spacer";
+      availableSymbolsSpacer.setAttribute("aria-hidden", "true");
+      promptSymbols.append(availableSymbolsSpacer);
+      for (const symbol of question.available_symbols || []) {
+        const figure = document.createElement("figure");
+        figure.className = "prompt-symbol prompt-available-symbol";
+        figure.setAttribute("aria-label", `Available symbol: ${symbol.word}`);
+        const image = document.createElement("img");
+        image.src = symbol.image_url;
+        image.alt = "";
+        figure.append(image);
+        promptSymbols.append(figure);
+      }
       promptSymbols.hidden = false;
     } else {
       promptSymbols.hidden = true;

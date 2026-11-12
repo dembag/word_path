@@ -706,6 +706,26 @@ select {
     object-fit: contain;
 }
 
+.prompt-question-mark {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: var(--small-card-width);
+    height: var(--small-card-height);
+    color: #25213d;
+    font-size: clamp(2.5rem, 5vw, 5rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.prompt-available-symbols-spacer {
+    display: block;
+    flex: 0 0 var(--small-card-width);
+    width: var(--small-card-width);
+    height: var(--small-card-height);
+}
+
 .response-panel {
     padding-block: 4px;
     display: flex;

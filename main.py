@@ -165,7 +165,10 @@ def practice_page(
     symbol_ids = {
         symbol_id
         for question in questions
-        for symbol_id in question.get("question_symbol_ids", [])
+        for symbol_id in (
+            question.get("question_symbol_ids", [])
+            + question.get("available_symbol_ids", [])
+        )
     }
     symbols = db.scalars(
         select(dm.Symbol).where(dm.Symbol.symbol_id.in_(symbol_ids))
@@ -181,6 +184,18 @@ def practice_page(
             if symbol is None:
                 continue
             ui_question["question_symbols"].append(
+                {
+                    "symbol_id": symbol.symbol_id,
+                    "word": symbol.word,
+                    "image_url": static_symbol_url(symbol.image_reference),
+                }
+            )
+        ui_question["available_symbols"] = []
+        for symbol_id in question.get("available_symbol_ids", []):
+            symbol = symbols_by_id.get(symbol_id)
+            if symbol is None:
+                continue
+            ui_question["available_symbols"].append(
                 {
                     "symbol_id": symbol.symbol_id,
                     "word": symbol.word,

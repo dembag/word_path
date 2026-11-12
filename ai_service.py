@@ -156,9 +156,8 @@ def generate_questions(
         5. {location_rule} 
         6. Format: Follow practice_format exactly.
            - Multiple choice: available_symbol_ids contains 1 correct symbol and 2-3 
-             plausible distractors, and expected_response contains exactly 1 correct symbol id.
-           - Free selection: available_symbol_ids contains the symbols that make sense
-             for the situation, and expected_response lists the correct symbol(s).
+           distractors. The distractors should not be plausible answers, 
+           and expected_response contains exactly 1 correct symbol id.
         7. Variety: Do not repeat the same situation or target symbol in every question.
            Order the questions from easier to slightly harder.
         8. Tone: Neutral and encouraging. Never mention failure or anything distressing.

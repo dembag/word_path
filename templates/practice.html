@@ -37,6 +37,13 @@
                 <img src="{{ symbol.image_url }}" alt="">
             </figure>
             {% endfor %}
+            <span class="prompt-question-mark" aria-label="Question mark">?</span>
+            <span class="prompt-available-symbols-spacer" aria-hidden="true"></span>
+            {% for symbol in practice_questions[0].available_symbols %}
+            <figure class="prompt-symbol prompt-available-symbol" aria-label="Available symbol: {{ symbol.word }}">
+                <img src="{{ symbol.image_url }}" alt="">
+            </figure>
+            {% endfor %}
         </div>
         {% else %}
         <div class="prompt-symbols" id="promptSymbols" hidden></div>
@@ -83,5 +90,5 @@
     </section>
 </main>
 <script id="practiceQuestions" type="application/json">{{ practice_questions|tojson }}</script>
-<script src="/static/js/practice-prompt.js?v=submit-fix-1" defer></script>
+<script src="/static/js/practice-prompt.js?v=available-strip-gap-1" defer></script>
 {% endblock content %}
