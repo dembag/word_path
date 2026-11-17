@@ -105,6 +105,10 @@ class UserSymbolResponse(BaseModel):
     word_class: str = Field(min_length=1, max_length=20)
 
 
+class VocabularyReorder(BaseModel):
+    sections: dict[Literal["personal", "core", "general"], list[int]]
+
+
 # ------ Question schema ------
 class LearnerQuestion(BaseModel):
     question_id: int

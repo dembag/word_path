@@ -17,6 +17,40 @@ The interface SHALL provide a splash page listing existing learner profiles and 
 - **WHEN** a learner selects a profile
 - **THEN** the interface opens that learner's pre-session screen and uses that profile for subsequent practice
 
+### Requirement: Caregiver can add a learner profile from the splash page
+The interface SHALL provide an Add learner action on the profile splash page and SHALL let a caregiver create a learner profile using the supported profile fields.
+
+#### Scenario: Open profile creation
+- **WHEN** a caregiver selects Add learner on the splash page
+- **THEN** the interface displays a form for the learner's name, age band, prompt display, starting format, communication goals, locations, and card size
+
+#### Scenario: Save a new learner profile
+- **WHEN** a caregiver submits valid profile details
+- **THEN** the interface creates the profile through the profile API and opens its pre-session screen
+
+#### Scenario: Invalid profile details
+- **WHEN** profile creation fails validation or the API reports an error
+- **THEN** the interface explains the error and keeps the entered details available for correction
+
+### Requirement: Caregiver can manage learner vocabulary
+The interface SHALL provide vocabulary management from learner setup and profile settings. Caregivers SHALL be able to browse or search the shared symbol catalog, add catalog symbols to a chosen section, upload learner-only custom symbols with a word label and chosen section, reorder or move assigned symbols by dragging them between sections, and remove assignments. Custom symbols SHALL not be available to other learners.
+
+#### Scenario: Browse or search the shared catalog
+- **WHEN** a caregiver opens the vocabulary manager
+- **THEN** the caregiver can browse the catalog or search symbols by word and add an unassigned symbol to Personal, Core, or General
+
+#### Scenario: Upload a learner-only symbol
+- **WHEN** a caregiver provides a word label, image, and section for a custom symbol
+- **THEN** the image is rendered as a labeled card using the project's card renderer, stored for that learner, assigned to the chosen section, and excluded from other learners' catalog results
+
+#### Scenario: Reorder or move symbols
+- **WHEN** a caregiver drags an assigned symbol within a section or into another section
+- **THEN** the new order and section are saved and appear in that learner's practice board
+
+#### Scenario: Remove an assigned symbol
+- **WHEN** a caregiver removes a symbol from the learner's board
+- **THEN** the learner-symbol assignment is removed without deleting a shared catalog symbol
+
 ### Requirement: Learner can manage their full profile before practice
 The interface SHALL provide access to full profile settings from the pre-session screen and SHALL keep profile settings unavailable during an active practice session.
 
@@ -52,7 +86,7 @@ The interface SHALL present the current scenario according to the learner's prom
 
 #### Scenario: Text-only prompt
 - **WHEN** the learner profile uses text-only prompts
-- **THEN** the prompt area presents the scenario text without response symbols
+- **THEN** the prompt text appears without its supporting question symbols, while the question strip centers the available answer symbols in its free space
 
 #### Scenario: Symbols-and-text prompt
 - **WHEN** the learner profile uses symbols-and-text prompts

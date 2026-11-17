@@ -1,15 +1,18 @@
 import random
+import uuid
+from io import BytesIO
 from datetime import datetime, UTC
 
-from fastapi import Depends, FastAPI, Request, HTTPException, status
+from fastapi import Depends, FastAPI, Request, HTTPException, status, UploadFile, File, Form, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Annotated
-from sqlalchemy import delete, select, desc
+from sqlalchemy import delete, select, desc, text, inspect
 from sqlalchemy.orm import Session
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from data_manager import Base, engine, get_db
 import data_models as dm
@@ -27,16 +30,25 @@ from api_schemas import (
     UserResponse,
     UserSymbolBase,
     UserSymbolResponse,
+    VocabularyReorder,
     UserUpdate,
 )
 
 import data_manager
 import ai_service
+from scripts.render_card import CardRenderer
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as connection:
+        symbol_columns = {column["name"] for column in inspect(connection).get_columns("symbols")}
+        if "owner_user_id" not in symbol_columns:
+            connection.execute(text(
+                "ALTER TABLE symbols ADD COLUMN owner_user_id INTEGER "
+                "REFERENCES users(user_id) ON DELETE CASCADE"
+            ))
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -68,6 +80,28 @@ def profile_splash(request: Request, db: Annotated[Session, Depends(get_db)]):
         request=request,
         name="home.html",
         context={"title": "Choose a profile", "users": users},
+    )
+
+
+@app.get("/profiles/new", response_class=HTMLResponse, include_in_schema=False)
+def new_profile_page(request: Request):
+    """Shows the learner profile creation form."""
+    return templates.TemplateResponse(
+        request=request,
+        name="add_profile.html",
+        context={
+            "title": "Add a learner",
+            "age_bands": ["0-5", "6-9", "10-13", "14-17", "18+"],
+            "formats": ["choice", "sentence"],
+            "prompt_displays": ["text_only", "symbols_and_text"],
+            "communication_goals": [
+                ("requesting", "Requesting"),
+                ("sharing_information", "Sharing information"),
+                ("social_interaction", "Social interaction"),
+                ("communication_repair", "Communication repair"),
+            ],
+            "card_sizes": ["small", "medium", "large"],
+        },
     )
 
 
@@ -137,6 +171,35 @@ def profile_settings_page(
             ],
             "card_sizes": ["small", "medium", "large"],
         },
+    )
+
+
+@app.get("/profiles/{user_id}/vocabulary", response_class=HTMLResponse, include_in_schema=False)
+def profile_vocabulary_page(
+    user_id: int,
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    user = db.get(dm.User, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    vocabulary = data_manager.get_user_vocabulary(db, user_id)
+    symbols = []
+    for item in vocabulary:
+        symbol = db.get(dm.Symbol, item.symbol_id)
+        symbols.append({
+            "symbol_id": item.symbol_id,
+            "word": item.word,
+            "word_class": item.word_class,
+            "page": item.page,
+            "position": item.position,
+            "image_url": static_symbol_url(symbol.image_reference),
+            "custom": symbol.owner_user_id == user_id,
+        })
+    return templates.TemplateResponse(
+        request=request,
+        name="vocabulary_manager.html",
+        context={"title": f"Vocabulary for {user.name}", "user": user, "vocabulary": symbols},
     )
 
 
@@ -412,6 +475,12 @@ def delete_user(
     db.execute(
         delete(dm.PracticeSession).where(dm.PracticeSession.user_id == user_id)
     )
+    custom_symbols = db.scalars(
+        select(dm.Symbol).where(dm.Symbol.owner_user_id == user_id)
+    ).all()
+    for symbol in custom_symbols:
+        (BASE_DIR / "static" / symbol.image_reference).unlink(missing_ok=True)
+        db.delete(symbol)
 
     # Delete profile
     db.delete(user)
@@ -419,16 +488,22 @@ def delete_user(
 
 
 # ------ Symbols ------
-@app.get(
-    "/symbols",
-    response_model=list[SymbolResponse],
-    status_code=status.HTTP_200_OK,
-)
-def display_symbols(db: Annotated[Session, Depends(get_db)]):
+@app.get("/symbols", response_model=list[SymbolResponse], status_code=status.HTTP_200_OK)
+def display_symbols(
+    db: Annotated[Session, Depends(get_db)],
+    user_id: int | None = Query(default=None),
+):
     """
     Displays all symbols
     """
-    return db.scalars(select(dm.Symbol).order_by(dm.Symbol.symbol_id)).all()
+    statement = select(dm.Symbol).where(dm.Symbol.owner_user_id.is_(None))
+    if user_id is not None:
+        if db.get(dm.User, user_id) is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        statement = select(dm.Symbol).where(
+            (dm.Symbol.owner_user_id.is_(None)) | (dm.Symbol.owner_user_id == user_id)
+        )
+    return db.scalars(statement.order_by(dm.Symbol.word, dm.Symbol.symbol_id)).all()
 
 
 @app.get("/symbols/{symbol_id}", include_in_schema=False)
@@ -439,12 +514,63 @@ def display_symbol():
     pass
 
 
-@app.post("/symbols", include_in_schema=False)
-def add_symbol():
-    """
-    Adds custom symbols to the Symbol table and vocab_symbol.
-    """
-    pass
+@app.post("/symbols/custom", response_model=SymbolResponse, status_code=status.HTTP_201_CREATED)
+def add_custom_symbol(
+    user_id: int = Form(...),
+    word: str = Form(...),
+    page: str = Form(...),
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    """Creates an image symbol owned by one learner and assigns it to their board."""
+    user = db.get(dm.User, user_id)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    word = word.strip()
+    if not word or len(word) > 20:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Word label must be 1 to 20 characters.")
+    if page not in {"personal", "core", "general"}:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose Personal, Core, or General.")
+
+    contents = image.file.read(5 * 1024 * 1024 + 1)
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Image must be 5 MB or smaller.")
+    try:
+        with Image.open(BytesIO(contents)) as source_image:
+            if source_image.format not in {"PNG", "JPEG", "WEBP"}:
+                raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Upload a PNG, JPEG, or WebP image.")
+            if source_image.width * source_image.height > 25_000_000:
+                raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Image dimensions must be 25 megapixels or smaller.")
+            source_image.verify()
+        with Image.open(BytesIO(contents)) as source_image:
+            converted = ImageOps.exif_transpose(source_image)
+            converted.thumbnail((1200, 1200))
+            converted = converted.convert("RGBA" if "A" in converted.getbands() else "RGB")
+            rendered_card = CardRenderer().render(converted, word)
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError):
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="The uploaded file is not a supported image.")
+
+    image_directory = BASE_DIR / "static" / "custom_symbols" / str(user_id)
+    image_directory.mkdir(parents=True, exist_ok=True)
+    image_name = f"{uuid.uuid4().hex}_card.png"
+    image_path = image_directory / image_name
+    rendered_card.save(image_path, format="PNG")
+    symbol = dm.Symbol(
+        word=word,
+        word_class="custom",
+        image_reference=f"custom_symbols/{user_id}/{image_name}",
+        source="custom_upload",
+        owner_user_id=user_id,
+    )
+    try:
+        db.add(symbol)
+        db.flush()
+        data_manager.update_user_vocabulary(db, user_id, symbol.symbol_id, page)
+    except Exception:
+        db.rollback()
+        image_path.unlink(missing_ok=True)
+        raise
+    return symbol
 
 
 # ------ Vocabulary ------
@@ -490,6 +616,13 @@ def update_vocabulary(
             detail="Symbol is not in the database",
         )
 
+    if page not in {"personal", "core", "general"}:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose Personal, Core, or General.")
+
+    symbol = db.get(dm.Symbol, symbol_id)
+    if symbol.owner_user_id is not None and symbol.owner_user_id != user_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Symbol is not available to this learner")
+
     if db.get(dm.UserSymbol, (user_id, symbol_id)):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -498,6 +631,26 @@ def update_vocabulary(
 
     updated_symbol = data_manager.update_user_vocabulary(db, user_id, symbol_id, page)
     return updated_symbol
+
+
+@app.put("/vocabulary/{user_id}/order", status_code=status.HTTP_204_NO_CONTENT)
+def reorder_user_vocabulary(
+    user_id: int,
+    order: VocabularyReorder,
+    db: Annotated[Session, Depends(get_db)],
+):
+    if db.get(dm.User, user_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    current = db.scalars(select(dm.UserSymbol).where(dm.UserSymbol.user_id == user_id)).all()
+    submitted_ids = [symbol_id for ids in order.sections.values() for symbol_id in ids]
+    if len(submitted_ids) != len(set(submitted_ids)) or set(submitted_ids) != {row.symbol_id for row in current}:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Order must include every assigned symbol exactly once.")
+    symbols_by_id = {row.symbol_id: row for row in current}
+    for page in ("personal", "core", "general"):
+        for position, symbol_id in enumerate(order.sections.get(page, []), start=1):
+            symbols_by_id[symbol_id].page = page
+            symbols_by_id[symbol_id].position = position
+    db.commit()
 
 
 @app.delete(

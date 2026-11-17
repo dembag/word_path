@@ -20,15 +20,15 @@ Start FastAPI:
 uvicorn main:app --reload
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in Chrome. The first page lists the profiles already in the database. FastAPI creates the database tables and seeds the built-in symbol catalog at startup; it does not create a learner profile or assign vocabulary automatically.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000) in Chrome. The first page lists profiles already in the database and has an **Add learner** button for creating a profile. FastAPI creates the database tables and seeds the built-in symbol catalog at startup; it does not create a learner profile or assign vocabulary automatically.
 
 ## Prepare a learner profile
 
-If the profile page is empty, open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) and:
+To create a profile in the learner interface, choose **Add learner**, enter the learner's profile settings, and save. Open a learner and choose **Vocabulary** from setup or **Manage vocabulary** from profile settings to:
 
-1. Use `POST /users` to create a profile. Include a name, age band, `starting_format` (`choice` or `sentence`), at least one `communication_goals` entry, and the desired prompt display and card size.
-2. Use `GET /symbols` to find symbol IDs.
-3. Add symbols with `POST /vocabulary/{user_id}`, supplying `symbol_id` and `page` as query parameters. Repeat for each symbol the learner should have.
+1. Browse the shared catalog or search by word, then choose a board section when adding a symbol.
+2. Upload a custom PNG, JPEG, or WebP image with its word label; custom symbols are available only to that learner.
+3. Drag symbols to reorder them or move them between Personal, Core, and General, and use **Remove** to take an assignment off the board.
 
 The seed ingestion script can populate the symbol catalog and image files before assigning vocabulary. Run it from the project root with the database configured:
 

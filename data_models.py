@@ -73,6 +73,9 @@ class Symbol(Base):
 
     # Formatted symbol credits, eg. 'Author: <name>; source: <name>; licence: <licence_code>'
     attribution: Mapped[str | None] = mapped_column(String(200), nullable=True, )
+    owner_user_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=True
+    )
 
 
 class PracticeSession(Base):

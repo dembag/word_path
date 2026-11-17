@@ -16,7 +16,10 @@
                     <p class="eyebrow">Learner profile</p>
                     <h2 id="profile-summary-title">{{ user.name }}</h2>
                 </div>
-                <a class="button button-secondary" href="/profiles/{{ user.user_id }}/settings" aria-label="Settings for {{ user.name }}">⚙ Settings</a>
+                <div class="profile-tools">
+                    <a class="button button-secondary" href="/profiles/{{ user.user_id }}/vocabulary">Vocabulary</a>
+                    <a class="button button-secondary" href="/profiles/{{ user.user_id }}/settings" aria-label="Settings for {{ user.name }}">⚙ Settings</a>
+                </div>
             </div>
             <dl class="profile-details">
                 <div><dt>Age band</dt><dd>{{ user.age_band }}</dd></div>

@@ -4,7 +4,8 @@
     <section class="welcome-panel">
         <p class="eyebrow">AAC practice</p>
         <h1>Who is practising today?</h1>
-        <p>Choose a learner profile to get started.</p>
+        <p>Choose a learner profile to get started, or add a new learner.</p>
+        <a class="button button-primary splash-add-button" href="/profiles/new">＋ Add learner</a>
     </section>
 
     {% if users %}
@@ -23,7 +24,7 @@
     {% else %}
     <section class="empty-state">
         <h2>No learner profiles yet</h2>
-        <p>Create a profile through the API before starting AAC practice.</p>
+        <p>Add a learner profile to get started with AAC practice.</p>
     </section>
     {% endif %}
 </main>

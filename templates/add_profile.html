@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block content %}
+<main class="page-shell settings-page">
+    <a class="back-link" href="/">← Back to profiles</a>
+
+    <section class="welcome-panel">
+        <p class="eyebrow">New learner</p>
+        <h1>Add a learner profile</h1>
+        <p>Choose the learner's practice settings. You can change them later.</p>
+    </section>
+
+    <form class="panel settings-form" id="newProfileForm">
+        <div class="form-grid">
+            <label class="form-field" for="profileName">
+                <span>Name</span>
+                <input id="profileName" name="name" type="text" maxlength="50" required autocomplete="off">
+            </label>
+
+            <label class="form-field" for="ageBand">
+                <span>Age band</span>
+                <select id="ageBand" name="age_band" required>
+                    {% for band in age_bands %}<option value="{{ band }}">{{ band }} years</option>{% endfor %}
+                </select>
+            </label>
+
+            <fieldset class="form-group">
+                <legend>Prompt display</legend>
+                {% for display in prompt_displays %}
+                <label class="choice-field"><input type="radio" name="prompt_display" value="{{ display }}" {% if display == 'symbols_and_text' %}checked{% endif %}><span>{{ display|replace('_', ' ')|title }}</span></label>
+                {% endfor %}
+            </fieldset>
+
+            <fieldset class="form-group">
+                <legend>Starting practice format</legend>
+                {% for format in formats %}
+                <label class="choice-field"><input type="radio" name="starting_format" value="{{ format }}" {% if format == 'choice' %}checked{% endif %}><span>{{ format|title }}</span></label>
+                {% endfor %}
+            </fieldset>
+
+            <fieldset class="form-group form-group--wide">
+                <legend>Communication goals</legend>
+                <div class="checkbox-grid">
+                    {% for goal, label in communication_goals %}
+                    <label class="choice-field"><input type="checkbox" name="communication_goals" value="{{ goal }}"><span>{{ label }}</span></label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <label class="form-field form-field--wide" for="profileLocations">
+                <span>Practice locations <small>One per line; leave blank if no location is needed.</small></span>
+                <textarea id="profileLocations" name="locations" rows="4"></textarea>
+            </label>
+
+            <label class="form-field" for="cardSize">
+                <span>Vocabulary card size</span>
+                <select id="cardSize" name="card_size">
+                    {% for size in card_sizes %}<option value="{{ size }}" {% if size == 'medium' %}selected{% endif %}>{{ size|title }}</option>{% endfor %}
+                </select>
+            </label>
+        </div>
+
+        <p class="form-status" id="settingsStatus" role="status" aria-live="polite"></p>
+        <div class="settings-actions">
+            <a class="button button-secondary" href="/">Cancel</a>
+            <button class="button button-primary" id="createProfileButton" type="submit">Add learner</button>
+        </div>
+    </form>
+</main>
+<script src="/static/js/profile-create.js" defer></script>
+{% endblock content %}

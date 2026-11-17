@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block content %}
+<main class="page-shell vocabulary-manager" id="vocabularyManager" data-user-id="{{ user.user_id }}">
+    <a class="back-link" href="/profiles/{{ user.user_id }}">← Back to {{ user.name }}'s setup</a>
+    <section class="welcome-panel">
+        <p class="eyebrow">Learner vocabulary</p>
+        <h1>Manage {{ user.name }}'s board</h1>
+        <p>Choose a section when adding symbols. Drag assigned symbols to reorder them or move them between sections.</p>
+    </section>
+
+    <div class="vocabulary-manager-grid">
+        <section class="panel vocabulary-source-panel" aria-labelledby="catalog-title">
+            <h2 id="catalog-title">Add from catalog</h2>
+            <label class="form-field" for="catalogSearch">
+                <span>Search by word or browse</span>
+                <input id="catalogSearch" type="search" placeholder="Search symbols" autocomplete="off">
+            </label>
+            <label class="field-label" for="catalogSection">Add to section</label>
+            <select id="catalogSection">
+                <option value="personal">Personal</option><option value="core">Core</option><option value="general">General</option>
+            </select>
+            <p class="form-status" id="catalogStatus" role="status" aria-live="polite"></p>
+            <div class="catalog-results" id="catalogResults" aria-live="polite"></div>
+        </section>
+
+        <section class="panel custom-symbol-panel" aria-labelledby="custom-title">
+            <h2 id="custom-title">Add a custom symbol</h2>
+            <form id="customSymbolForm">
+                <label class="form-field" for="customWord"><span>Word label</span><input id="customWord" name="word" maxlength="20" required></label>
+                <label class="field-label" for="customSection">Section</label>
+                <select id="customSection" name="page"><option value="personal">Personal</option><option value="core">Core</option><option value="general">General</option></select>
+                <label class="form-field custom-image-field" for="customImage"><span>Image <small>PNG, JPEG, or WebP; up to 5 MB. The word label is rendered onto the card.</small></span><input id="customImage" name="image" type="file" accept="image/png,image/jpeg,image/webp" required></label>
+                <p class="form-status" id="customStatus" role="status" aria-live="polite"></p>
+                <button class="button button-primary" id="uploadCustomButton" type="submit">Upload and add</button>
+            </form>
+        </section>
+    </div>
+
+    <section class="assigned-vocabulary" aria-labelledby="assigned-title">
+        <div class="manager-section-heading"><div><p class="eyebrow">Current board</p><h2 id="assigned-title">Assigned symbols</h2></div><p class="manager-hint">Drag to reorder or change sections.</p></div>
+        <p class="form-status" id="boardStatus" role="status" aria-live="polite"></p>
+        <div class="manager-board">
+            {% for section in ["personal", "core", "general"] %}
+            <section class="manager-board-section" data-section="{{ section }}" aria-labelledby="manager-{{ section }}">
+                <h3 id="manager-{{ section }}">{{ section|title }}</h3>
+                <div class="manager-symbol-list" data-section-list="{{ section }}">
+                    {% for symbol in vocabulary if symbol.page|lower == section or (section == 'personal' and symbol.page|lower == 'people') or (section == 'general' and symbol.page|lower not in ['personal', 'people', 'core']) %}
+                    <article class="manager-symbol" data-symbol-id="{{ symbol.symbol_id }}" data-page="{{ section }}">
+                        <img src="{{ symbol.image_url }}" alt="" draggable="false">
+                        <span>{{ symbol.word }}</span>
+                        <button class="remove-symbol-button" type="button" aria-label="Remove {{ symbol.word }}">Remove</button>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </div>
+    </section>
+</main>
+<script src="/static/js/vocabulary-manager.js?v=pointer-drag-document-7" defer></script>
+{% endblock content %}

@@ -11,12 +11,15 @@ The project is a FastAPI application with Jinja2 installed, starter templates in
 - Give learners a direct browser path from profile selection through a complete practice session.
 - Preserve the prototype's landscape tablet layout, color-separated board sections, message strip, and stable vocabulary positions; keep the learner interface landscape-only.
 - Provide a profile splash page and full profile settings before a session starts.
+- Let a caregiver create a learner profile from the profile splash page.
+- Let caregivers manage each learner's board vocabulary from learner setup and profile settings.
 - Keep the implementation understandable and within the existing FastAPI, Jinja, HTML, CSS, and JavaScript stack.
 - Connect profile, vocabulary, and session interactions to existing API endpoints.
 
 **Non-Goals:**
 
-- Creating or deleting learner profiles in the interface.
+- Deleting learner profiles in the interface.
+- Sharing custom symbols across learners or editing the shared catalog.
 - Opening profile settings during an active practice session.
 - Adding a frontend framework, build pipeline, caregiver analytics, recommendations, or AI integration.
 - Replacing the prototype's AAC board visual language.
@@ -25,9 +28,13 @@ The project is a FastAPI application with Jinja2 installed, starter templates in
 
 ### Use a profile splash and a pre-session screen
 
-The splash page lists existing profiles. Selecting a profile opens a pre-session screen with the learner's profile summary, enabled communication goals, configured starting format, a Start Practice action, and a Settings action. Settings opens the selected learner's full profile editor. Saving settings returns to the pre-session screen. Once a session starts, the active practice view has no Settings action; the profile cannot be changed mid-session.
+The splash page lists existing profiles and provides an Add learner action. The action opens a profile creation form for the fields supported by the existing user API. Saving creates the profile through `POST /users` and opens its pre-session screen. Selecting an existing profile opens a pre-session screen with the learner's profile summary, enabled communication goals, configured starting format, a Start Practice action, and a Settings action. Settings opens the selected learner's full profile editor. Saving settings returns to the pre-session screen. Once a session starts, the active practice view has no Settings action; the profile cannot be changed mid-session.
 
-Profile selection and editing use the existing `/users`, `/users/{user_id}`, and `PATCH /users/{user_id}` APIs. The settings editor covers the profile fields already supported by `UserUpdate`: name, age band, prompt display, starting format, communication goals, locations, and card size. Profile creation and deletion remain outside this interface.
+Profile listing, creation, and editing use the existing `/users`, `/users/{user_id}`, and `PATCH /users/{user_id}` APIs. The creation form supplies the fields required by `UserCreate`; the settings editor covers the profile fields supported by `UserUpdate`: name, age band, prompt display, starting format, communication goals, locations, and card size. Profile deletion remains outside this interface.
+
+### Manage vocabulary per learner
+
+Provide a vocabulary manager linked from both learner setup and profile settings. Caregivers can browse or search shared catalog symbols, assign one to Personal, Core, or General, upload a custom image with a word label and section, drag symbols within or between sections to set board order, and remove assigned symbols. Custom symbols belong to one learner and do not appear in other learners' catalog results. Persist each section's order in the learner-symbol association; preserve shared catalog records when an assignment is removed.
 
 ### Fill the browser viewport with the practice board
 
@@ -71,7 +78,7 @@ The UI depends on the session start, response submission, and completion contrac
 
 ## Migration Plan
 
-No data migration is expected. Add page routes, Jinja templates, and static assets alongside the JSON API. Keep the API available for direct use and documentation.
+Add page routes, Jinja templates, and static assets alongside the JSON API. Add nullable custom-symbol ownership to the symbol table, upgrading existing databases at startup; store uploaded image files under learner-specific paths. Keep the API available for direct use and documentation.
 
 ## Open Questions
 

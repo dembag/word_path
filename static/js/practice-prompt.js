@@ -190,7 +190,9 @@ if (practiceRoot && practiceQuestionsNode) {
     fitPromptQuestion();
     updateVocabularyAvailability(question);
     promptSymbols.replaceChildren();
-    if (practiceRoot.dataset.promptDisplay === "symbols_and_text") {
+    const showQuestionSymbols = practiceRoot.dataset.promptDisplay === "symbols_and_text";
+    promptSymbols.classList.toggle("prompt-symbols--text-only", !showQuestionSymbols);
+    if (showQuestionSymbols) {
       for (const symbol of question.question_symbols || []) {
         const figure = document.createElement("figure");
         figure.className = "prompt-symbol";
@@ -209,20 +211,18 @@ if (practiceRoot && practiceQuestionsNode) {
       availableSymbolsSpacer.className = "prompt-available-symbols-spacer";
       availableSymbolsSpacer.setAttribute("aria-hidden", "true");
       promptSymbols.append(availableSymbolsSpacer);
-      for (const symbol of question.available_symbols || []) {
-        const figure = document.createElement("figure");
-        figure.className = "prompt-symbol prompt-available-symbol";
-        figure.setAttribute("aria-label", `Available symbol: ${symbol.word}`);
-        const image = document.createElement("img");
-        image.src = symbol.image_url;
-        image.alt = "";
-        figure.append(image);
-        promptSymbols.append(figure);
-      }
-      promptSymbols.hidden = false;
-    } else {
-      promptSymbols.hidden = true;
     }
+    for (const symbol of question.available_symbols || []) {
+      const figure = document.createElement("figure");
+      figure.className = "prompt-symbol prompt-available-symbol";
+      figure.setAttribute("aria-label", `Available symbol: ${symbol.word}`);
+      const image = document.createElement("img");
+      image.src = symbol.image_url;
+      image.alt = "";
+      figure.append(image);
+      promptSymbols.append(figure);
+    }
+    promptSymbols.hidden = false;
   }
 
   function beginQuestion(index) {
