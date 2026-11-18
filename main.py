@@ -756,6 +756,7 @@ def start_session(
     # available_vocabulary, age_band
     try:
         generated_batch: GeneratedQuestionBatch = ai_service.generate_questions(
+            db,
             communication_goal,
             practice_format,
             location,

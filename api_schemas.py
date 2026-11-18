@@ -112,19 +112,35 @@ class VocabularyReorder(BaseModel):
 # ------ Question schema ------
 class LearnerQuestion(BaseModel):
     question_id: int
-    location: NonBlankStr | None = Field(max_length=20, default=None)
+    location: NonBlankStr | None = Field(
+        max_length=20,
+        default=None,
+        description="Setting of the question, null if none",
+    )
     question_format: PracticeFormat
     communication_goal: CommunicationGoal
-    question: NonBlankStr
-    question_symbol_ids: list[int] = Field(min_length=1)
-    available_symbol_ids: list[int] = Field(min_length=1)
+    question: NonBlankStr = Field(
+        description="Question text in plain words, never IDs",
+    )
+    question_symbol_ids: list[int] = Field(
+        min_length=1,
+        description="Ordered catalog IDs for the key words of the question. "
+        "Omit words with no symbol. Must not contain the answer or any option.",
+    )
+    available_symbol_ids: list[int] = Field(
+        min_length=1,
+        description="Answer options: 1 correct symbol + 2-3 distractors",
+    )
 
 
 class GeneratedQuestion(LearnerQuestion):
     # Allows access by dot notation to work eg. user.name
     model_config = ConfigDict(from_attributes=True)
 
-    expected_response: list[int] = Field(min_length=1)
+    expected_response: list[int] = Field(
+        min_length=1,
+        description="Exactly one ID: the correct answer, which is in available_symbol_ids",
+    )
 
 
 class GeneratedQuestionBatch(BaseModel):

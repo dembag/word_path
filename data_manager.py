@@ -97,3 +97,22 @@ def update_user_vocabulary(
     db.refresh(added_symbol)
 
     return added_symbol
+
+
+def prompt_catalog(
+    db: Session,
+) -> list[dict[str, int | str]]:
+    """Return each symbol's ID and word from the symbol catalog."""
+    import data_models as dm
+
+    rows = (
+        db.execute(
+            select(dm.Symbol.symbol_id, dm.Symbol.word, dm.Symbol.word_class).order_by(
+                dm.Symbol.symbol_id
+            )
+        )
+        .mappings()
+        .all()
+    )
+
+    return [dict(row) for row in rows]

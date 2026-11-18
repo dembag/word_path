@@ -50,7 +50,7 @@ class CardRenderer:
         card_height=600,
         label_band_ratio=0.22,
         border_color=(30, 30, 30),
-        border_width=4,
+        border_width=0,
         background_color=(255, 255, 255),
         label_color=(20, 20, 20),
         max_font_size=64,
@@ -124,10 +124,11 @@ class CardRenderer:
         draw.text((text_x, text_y), label.upper(), font=font, fill=self.label_color)
 
         # --- Card border ---
-        draw.rectangle(
-            [0, 0, self.card_width - 1, self.card_height - 1],
-            outline=self.border_color, width=self.border_width,
-        )
+        if self.border_width > 0:
+            draw.rectangle(
+                [0, 0, self.card_width - 1, self.card_height - 1],
+                outline=self.border_color, width=self.border_width,
+            )
 
         return card
 
