@@ -3,9 +3,12 @@ const manager = document.querySelector("#vocabularyManager");
 if (manager) {
   const userId = manager.dataset.userId;
   const catalogSearch = document.querySelector("#catalogSearch");
-  const catalogSection = document.querySelector("#catalogSection");
   const catalogResults = document.querySelector("#catalogResults");
   const catalogStatus = document.querySelector("#catalogStatus");
+  const sectionPicker = document.querySelector("#sectionPicker");
+  const sectionPickerWord = document.querySelector("#sectionPickerWord");
+  const sectionPickerForm = document.querySelector("#sectionPickerForm");
+  const confirmSectionPicker = document.querySelector("#confirmSectionPicker");
   const boardStatus = document.querySelector("#boardStatus");
   const customForm = document.querySelector("#customSymbolForm");
   const customStatus = document.querySelector("#customStatus");
@@ -14,6 +17,7 @@ if (manager) {
   );
   let catalog = [];
   let pointerDrag = null;
+  let pendingSymbol = null;
 
   function showApiError(result, fallback) {
     if (Array.isArray(result?.detail)) return result.detail.map((item) => item.msg).join(" ");
@@ -50,11 +54,44 @@ if (manager) {
       addButton.type = "button";
       addButton.textContent = "Add";
       addButton.setAttribute("aria-label", `Add ${symbol.word}`);
-      addButton.addEventListener("click", () => addCatalogSymbol(symbol, addButton));
+      addButton.addEventListener("click", () => openSectionPicker(symbol, addButton));
       row.append(image, addButton);
       catalogResults.append(row);
     }
   }
+
+  function openSectionPicker(symbol, button) {
+    pendingSymbol = { symbol, button };
+    sectionPickerWord.textContent = symbol.word;
+    sectionPickerForm.reset();
+    confirmSectionPicker.disabled = true;
+    sectionPicker.showModal();
+  }
+
+  sectionPickerForm.querySelectorAll('input[name="section"]').forEach((radio) => {
+    radio.addEventListener("change", () => {
+      confirmSectionPicker.disabled = false;
+    });
+  });
+
+  sectionPickerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!pendingSymbol) return;
+    const section = new FormData(sectionPickerForm).get("section");
+    if (!section) return;
+    const selected = pendingSymbol;
+    pendingSymbol = null;
+    sectionPicker.close();
+    await addCatalogSymbol(selected.symbol, selected.button, section);
+  });
+
+  document.querySelector("#cancelSectionPicker").addEventListener("click", () => {
+    sectionPicker.close();
+  });
+
+  sectionPicker.addEventListener("close", () => {
+    pendingSymbol = null;
+  });
 
   async function loadCatalog() {
     catalogStatus.textContent = "Loading symbols…";
@@ -71,11 +108,11 @@ if (manager) {
     }
   }
 
-  async function addCatalogSymbol(symbol, button) {
+  async function addCatalogSymbol(symbol, button, section) {
     button.disabled = true;
     catalogStatus.textContent = `Adding ${symbol.word}…`;
     try {
-      const params = new URLSearchParams({ symbol_id: symbol.symbol_id, page: catalogSection.value });
+      const params = new URLSearchParams({ symbol_id: symbol.symbol_id, page: section });
       const response = await fetch(`/vocabulary/${userId}?${params}`, { method: "POST" });
       const result = response.status === 204 ? null : await response.json();
       if (!response.ok) throw new Error(showApiError(result, `Could not add ${symbol.word}.`));

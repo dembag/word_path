@@ -15,10 +15,6 @@
                 <span>Search by word or browse</span>
                 <input id="catalogSearch" type="search" placeholder="Search symbols" autocomplete="off">
             </label>
-            <label class="field-label" for="catalogSection">Add to section</label>
-            <select id="catalogSection">
-                <option value="personal">Personal</option><option value="core">Core</option><option value="general">General</option>
-            </select>
             <p class="form-status" id="catalogStatus" role="status" aria-live="polite"></p>
             <div class="catalog-results" id="catalogResults" aria-live="polite"></div>
         </section>
@@ -57,5 +53,21 @@
         </div>
     </section>
 </main>
-<script src="/static/js/vocabulary-manager.js?v=pointer-drag-document-7" defer></script>
+<dialog class="section-picker-dialog" id="sectionPicker" aria-labelledby="sectionPickerTitle">
+    <form class="section-picker-card" id="sectionPickerForm">
+        <h2 id="sectionPickerTitle">Choose a section</h2>
+        <p id="sectionPickerWord" class="section-picker-word"></p>
+        <p class="section-picker-help">Where should this symbol appear on the learner’s board?</p>
+        <fieldset class="section-picker-options" aria-label="Choose a vocabulary section">
+            <label class="section-picker-option"><input type="radio" name="section" value="personal"><span>Personal</span></label>
+            <label class="section-picker-option"><input type="radio" name="section" value="core"><span>Core</span></label>
+            <label class="section-picker-option"><input type="radio" name="section" value="general"><span>General</span></label>
+        </fieldset>
+        <div class="section-picker-actions">
+            <button class="button button-secondary" id="cancelSectionPicker" type="button">Cancel</button>
+            <button class="button button-primary" id="confirmSectionPicker" type="submit" disabled>Confirm</button>
+        </div>
+    </form>
+</dialog>
+<script src="/static/js/vocabulary-manager.js?v=catalog-section-picker-1" defer></script>
 {% endblock content %}

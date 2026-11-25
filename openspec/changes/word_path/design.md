@@ -15,7 +15,7 @@ This is a course MVP for a small FastAPI app. The mentor's guidance is to focus 
 
 **Non-Goals for this MVP:**
 
-- Docker, PostgreSQL, Alembic migrations, or pgvector.
+- PostgreSQL, Alembic migrations, or pgvector.
 - OpenAI calls, embeddings, RAG, or generated scenarios and recommendations.
 - Caregiver accounts, authentication, multiple caregiver roles, or production deployment.
 - A full AAC board frontend, ARASAAC search integration, or individual response analytics.
@@ -24,7 +24,7 @@ This is a course MVP for a small FastAPI app. The mentor's guidance is to focus 
 
 ### Use SQLite with the existing SQLAlchemy setup
 
-Keep database setup local and direct. Use a SQLite database file and the project's existing SQLAlchemy model/session pattern. Create the MVP tables from SQLAlchemy metadata during application startup if needed. Do not add Alembic or Docker for this stage. Store flexible list/summary values using SQLAlchemy's generic `JSON` type, which works with SQLite; do not use PostgreSQL-only `JSONB`.
+Keep database setup local and direct. Use a SQLite database file and the project's existing SQLAlchemy model/session pattern. Create the MVP tables from SQLAlchemy metadata during application startup if needed. Do not add Alembic for this stage. Store flexible list/summary values using SQLAlchemy's generic `JSON` type, which works with SQLite; do not use PostgreSQL-only `JSONB`.
 
 ### Keep the data model focused on four tables
 

@@ -26,5 +26,5 @@
 ## 4. MVP walkthrough
 
 - [ ] 4.1 Walk through user CRUD, symbol list/create/delete, session start, response, and completion using the API docs or simple HTTP requests.
-- [ ] 4.2 Update the basic setup notes to explain running the SQLite app and exercising the endpoints; remove instructions that require Docker, PostgreSQL, or Alembic for the MVP.
+- [ ] 4.2 Update the basic setup notes to explain running the SQLite app and exercising the endpoints; remove instructions that require PostgreSQL or Alembic for the MVP.
 - [ ] 4.3 Review the change against the mentor's MVP scope and identify any deferred capability that is still required by the course before expanding implementation.

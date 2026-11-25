@@ -289,11 +289,92 @@ h2 {
     aspect-ratio: 4 / 5;
     object-fit: contain;
     padding: 0;
+    border: 1px solid #111;
     clip-path: inset(1%);
 }
 
 .catalog-symbol .button {
     width: 100%;
+}
+
+.section-picker-dialog {
+    width: min(440px, calc(100% - 32px));
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 20px;
+    color: var(--ink);
+    background: transparent;
+    box-shadow: 0 24px 70px #10182740;
+}
+
+.section-picker-dialog::backdrop {
+    background: #10182799;
+    backdrop-filter: blur(3px);
+}
+
+.section-picker-card {
+    padding: 28px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+}
+
+.section-picker-card h2 {
+    margin-bottom: 6px;
+}
+
+.section-picker-word {
+    margin-bottom: 6px;
+    color: var(--blue-dark);
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.section-picker-help {
+    margin-bottom: 16px;
+    color: var(--muted);
+}
+
+.section-picker-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.section-picker-option {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 4px;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.section-picker-option input {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    accent-color: var(--blue);
+}
+
+.section-picker-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.section-picker-actions .button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
 }
 
 .custom-symbol-panel form {
@@ -1071,7 +1152,8 @@ select {
     display: grid;
     grid-template-columns: var(--personal-section-width) var(--core-section-width) minmax(var(--general-section-min), 1fr);
     align-content: stretch;
-    gap: var(--board-gap);
+    column-gap: 0;
+    row-gap: var(--board-gap);
 }
 
 .vocabulary-page {

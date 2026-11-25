@@ -27,7 +27,7 @@ The current project is a small FastAPI application, and the mentor advised keepi
 ## Impact
 
 - Simplify the existing FastAPI routes, SQLAlchemy models, database configuration, and Pydantic schemas to support the agreed MVP flow.
-- Use SQLite locally and avoid adding Docker, PostgreSQL, Alembic migrations, or pgvector for this stage.
+- Use SQLite locally and avoid adding PostgreSQL, Alembic migrations, or pgvector for this stage.
 - Add a small Python module containing a fictional learner fixture, preloaded catalog symbols, and fixed practice scenarios; persist catalog symbols as shared reference data, but keep the learner fixture separate from database records.
 - Keep demo data fictional and avoid storing individual response events after session completion.
 - Reconcile the longer-term capability specs with this reduced MVP before treating the full change as complete.
