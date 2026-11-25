@@ -176,8 +176,7 @@ def generate_questions(
         "communicate with their touch-screen communication device (AAC, symbol-based). "
         "You write short, concrete practice questions that train the person to find and "
         "select the right symbols for everyday situations. "
-        f"You create up to {SESSION_QUESTION_COUNT} practice questions, fewer only if "
-        "the vocabulary cannot support that many valid ones. "
+        f"You create exactly {SESSION_QUESTION_COUNT} practice questions."
         "You follow the rules in the user_prompt strictly."
     )
 
@@ -255,8 +254,6 @@ def generate_questions(
         14. Fallback: If the vocabulary cannot support a valid question, return fewer
             questions. Never break a rule to reach the count.
         """ + EXAMPLES
-
-
 
 
     feedback = None
